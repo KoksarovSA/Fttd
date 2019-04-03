@@ -1292,10 +1292,58 @@ namespace Fttd
                 var cellContent = selectedCell.Column.GetCellContent(selectedCell.Item);
                 string textDataGrid = (cellContent as TextBlock).Text;
                 string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
-                string[] name = textItem.Split('|');
-                TextBlockPF.Text = GetNoteFiles(name[1], textDataGrid);
-                Param_in param = new Param_in();
-                Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
+                switch (TextBlock_type.Text)
+                {
+                    case "Детали":
+                        try
+                        {
+                            string[] name = textItem.Split('|');
+                            TextBlockPF.Text = GetNoteFiles(name[1], textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
+                        }
+                        catch { } 
+                        break;
+                    case "Приспособления":
+                        try
+                        {
+                            TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
+                        }
+                        catch { }
+                        break;
+                    case "Задания":
+                        try
+                        {
+                            TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\Задания\\" + textDataGrid + "");
+                        }
+                        catch { }
+                        break;
+                    case "Проекты":
+                        break;
+                    case "Графики":
+                        try
+                        {
+                            TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\Графики\\" + textDataGrid + "");
+                        }
+                        catch { }
+                        break;
+                    case "Служебные":
+                        try
+                        {
+                            TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\Служебные\\" + textDataGrid + "");
+                        }
+                        catch { }
+                        break;
+                    default: break;
+                }
             }
             catch { }
 
