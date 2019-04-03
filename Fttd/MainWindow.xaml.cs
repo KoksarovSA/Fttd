@@ -77,6 +77,21 @@ namespace Fttd
                         dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'");                        
                         break;
                     }
+                case "Приспособление":
+                    if(File.Exists(work.Dir_file_copy_in))
+                        {
+                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе.", "Ошибка");
+                    }
+                        else
+                        {
+                        Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
+                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                        string[] vs = work.Dir_file_copy_in.Split('\\');
+                        string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
+                        Dbaccess dbaccess = new Dbaccess();
+                        dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'");
+                    }
+                    break;
                 default:
                     {
                         if (File.Exists(work.Dir_file_copy_in))
@@ -1274,31 +1289,31 @@ namespace Fttd
         {
             try
             {
-                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
-                string[] name = textItem.Split('|');
-                CopyFile(TextBoxFiles.Text, name[1], name[0],TextBoxNameFiles.Text ,ComboBoxTypeFiles.Text, TextBoxNote.Text);
+                switch (TextBlock_type.Text)
+                {
+                    case "Детали":
+                        try
+                        {
+                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
+                            string[] name = textItem.Split('|');
+                            CopyFile(TextBoxFiles.Text, name[1], name[0], TextBoxNameFiles.Text, ComboBoxTypeFiles.Text, TextBoxNote.Text);
+                        }
+                        catch { }
+                        break;
+                    case "Приспособления":
+                        try
+                        {
+                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
+                            CopyFile(TextBoxFiles.Text, textItem, "Приспособление", TextBoxNameFiles.Text, ComboBoxTypeFiles.Text, TextBoxNote.Text);
+                        }
+                        catch { }
+                        break;
+                    default: break;
+                }
+
             }
             catch { }
             SelectedTreeViewItem();
-        }
-
-        // Действие которое происходит при двойном нажатии левой клавишой мыши на элемент DataGridFiles
-        private void DataGridFiles_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            try
-            {
-                int selectedColumn = DataGridFiles.CurrentCell.Column.DisplayIndex;
-                var selectedCell = DataGridFiles.SelectedCells[selectedColumn];
-                var cellContent = selectedCell.Column.GetCellContent(selectedCell.Item);
-                string textDataGrid = (cellContent as TextBlock).Text;
-                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
-                string[] name = textItem.Split('|');
-                TextBlockPF.Text = GetNoteFiles(name[1], textDataGrid);
-                Param_in param = new Param_in();
-                Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
-            }
-            catch { }
-
         }
 
         // Кнопка изменения файла
@@ -1332,6 +1347,72 @@ namespace Fttd
             SelectedTreeViewItem();
         }
 
+        // Действие которое происходит при двойном нажатии левой клавишой мыши на элемент DataGridFiles
+        private void DataGridFiles_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                int selectedColumn = DataGridFiles.CurrentCell.Column.DisplayIndex;
+                var selectedCell = DataGridFiles.SelectedCells[selectedColumn];
+                var cellContent = selectedCell.Column.GetCellContent(selectedCell.Item);
+                string textDataGrid = (cellContent as TextBlock).Text;
+                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
+                switch (TextBlock_type.Text)
+                {
+                    case "Детали":
+                        try
+                        {
+                            string[] name = textItem.Split('|');
+                            TextBlockPF.Text = GetNoteFiles(name[1], textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
+                        }
+                        catch { }
+                        break;
+                    case "Приспособления":
+                        try
+                        {
+                            TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
+                        }
+                        catch { }
+                        break;
+                    case "Задания":
+                        try
+                        {
+                            TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\Задания\\" + textDataGrid + "");
+                        }
+                        catch { }
+                        break;
+                    case "Проекты":
+                        break;
+                    case "Графики":
+                        try
+                        {
+                            TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\Графики\\" + textDataGrid + "");
+                        }
+                        catch { }
+                        break;
+                    case "Служебные":
+                        try
+                        {
+                            TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
+                            Param_in param = new Param_in();
+                            Process.Start(@"" + param.GetDirFiles() + "\\Служебные\\" + textDataGrid + "");
+                        }
+                        catch { }
+                        break;
+                    default: break;
+                }
+            }
+            catch { }
+
+        }
 
         //    //var bc = new BrushConverter();
         //    //grid0.Background = (Brush)bc.ConvertFrom("#FF7AB9D1");
@@ -1341,7 +1422,7 @@ namespace Fttd
         //    //DataGridFiles.Background = (Brush)bc.ConvertFrom("#FF7AB9D1");
         //    //DataGridFiles.AlternatingRowBackground = (Brush)bc.ConvertFrom("#FF7AB9D1");
 
-       
+
 
         // Чекбокс отображения меню включен(отображение по проектам) 
         private void CheckBoxTreeViewSet_Checked(object sender, RoutedEventArgs e)
