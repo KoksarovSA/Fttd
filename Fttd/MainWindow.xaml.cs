@@ -936,56 +936,109 @@ namespace Fttd
             }
         }
 
+        //Действие при изменении чекбокса в настройках отображения по проектам
         private void CheckBoxTreeViewSet_Click(object sender, RoutedEventArgs e)
         {
             TreeviewSet();
         }
 
+        //Кнопка на весь экран
         private void Button_maxsize_Click(object sender, RoutedEventArgs e)
         {
             if(this.WindowState != WindowState.Maximized) this.WindowState = WindowState.Maximized;
             else this.WindowState = WindowState.Normal;
         }
 
+        //Кнопка свернуть окно
         private void Button_minimized_Click(object sender, RoutedEventArgs e)
         {
             this.WindowState = WindowState.Minimized;
         }
 
+        //Кнопка отображения деталей
         private void Button_detail_Click(object sender, RoutedEventArgs e)
         {
             TextBlock_type.Text = "Детали";
             TreeviewSet();
+            int[] a = { 60, 60, 60, 60, 60, 60, 0, 60 };
+            string[] b = { "Добавить деталь", "Изменить деталь", "Удалить деталь", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            ReadAddPanel(a, b);
         }
 
+        //Кнопка отображения приспособлений
         private void Button_device_Click(object sender, RoutedEventArgs e)
         {
             TextBlock_type.Text = "Приспособления";
             TreeviewSet();
+            int[] a = { 60, 60, 0, 0, 0, 60, 0, 60 };
+            string[] b = { "Добавить приспособление", "Изменить приспособление", "Удалить приспособление", "Индекс приспособления", "Название приспособления", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            ReadAddPanel(a, b);
         }
 
+        //Кнопка отображения заданий
         private void Button_task_Click(object sender, RoutedEventArgs e)
         {
             TextBlock_type.Text = "Задания";
             TreeviewSet();
+            int[] a = { 0, 0, 60, 60, 0, 0, 60, 60 };
+            string[] b = { "Добавить задание", "Изменить задание", "Удалить задание", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            ReadAddPanel(a, b);
         }
 
+        //Кнопка отображения проектов
         private void Button_project_Click(object sender, RoutedEventArgs e)
         {
             TextBlock_type.Text = "Проекты";
             TreeviewSet();
+            int[] a = { 0, 0, 0, 60, 0, 0, 0, 60 };
+            string[] b = { "Добавить проект", "Изменить проект", "Удалить проект", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            ReadAddPanel(a, b);
         }
 
+        //Кнопка отображения графиков
         private void Button_graphics_Click(object sender, RoutedEventArgs e)
         {
             TextBlock_type.Text = "Графики";
             TreeviewSet();
+            int[] a = { 0, 60, 0, 60, 0, 0, 60, 60 };
+            string[] b = { "Добавить график", "Изменить график", "Удалить график", "Индекс приспособления", "Название графика", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            ReadAddPanel(a, b);
         }
 
+        //Кнопка отображения служебных
         private void Button_service_Click(object sender, RoutedEventArgs e)
         {
             TextBlock_type.Text = "Служебные";
             TreeviewSet();
+            int[] a = { 60, 60, 0, 0, 0, 0, 60, 60 };
+            string[] b = { "Добавить служебную", "Изменить служебную", "Удалить служебную", "Индекс служебной", "Короткое описание", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            ReadAddPanel(a, b);
+        }
+
+        /// <summary>
+        /// Метод редактирующий форму добавления\редактирования\удаления 
+        /// </summary>
+        /// <param name="a">Массив из 8 параметров Height ячеек данных(rowindex.Height, rowname.Height, rowtask.Height, rowproject.Height, rownpu.Height, rowrazrab.Height, rowdir.Height, rowbutton.Height)</param>
+        /// <param name="b">Массив из 9 параметров(ButtonAddDetailInDB.ToolTip, ButtonReadDetailInDB.ToolTip, ButtonRemoveDetailInDB.ToolTip, TextBlockIndex.Text, TextBlockName.Text, TextBlockTask.Text, TextBlockProject.Text, TextBlockNPU.Text, TextBlockRazrab.Text)</param>
+        public void ReadAddPanel(int[] a, string[] b)
+        {
+            rowindex.Height = new GridLength(value: a[0], type: GridUnitType.Pixel);
+            rowname.Height = new GridLength(value: a[1], type: GridUnitType.Pixel);
+            rowtask.Height = new GridLength(value: a[2], type: GridUnitType.Pixel);
+            rowproject.Height = new GridLength(value: a[3], type: GridUnitType.Pixel);
+            rownpu.Height = new GridLength(value: a[4], type: GridUnitType.Pixel);
+            rowrazrab.Height = new GridLength(value: a[5], type: GridUnitType.Pixel);
+            rowdir.Height = new GridLength(value: a[6], type: GridUnitType.Pixel);
+            rowbutton.Height = new GridLength(value: a[7], type: GridUnitType.Pixel);
+            ButtonAddDetailInDB.ToolTip = b[0];
+            ButtonReadDetailInDB.ToolTip = b[1];
+            ButtonRemoveDetailInDB.ToolTip = b[2];
+            TextBlockIndex.Text = b[3];
+            TextBlockName.Text = b[4];
+            TextBlockTask.Text = b[5];
+            TextBlockProject.Text = b[6];
+            TextBlockNPU.Text = b[7];
+            TextBlockRazrab.Text = b[8];
         }
     }
 }

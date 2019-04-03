@@ -175,6 +175,7 @@
                                     <RowDefinition Name="rowproject" Height="60"/>
                                     <RowDefinition Name="rownpu" Height="60"/>
                                     <RowDefinition Name="rowrazrab" Height="60"/>
+                                    <RowDefinition Name="rowdir" Height="0"/>
                                     <RowDefinition Name="rowbutton" Height="50"/>
                                 </Grid.RowDefinitions>
                                 <StackPanel Grid.Row="0" Orientation="Vertical">
@@ -201,7 +202,16 @@
                                     <TextBlock Name="TextBlockRazrab" Text="Разработал" Foreground="White" Margin="15,5,0,0"/>
                                     <ComboBox Name="ComboBoxRazrab" Foreground="Black" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
                                 </StackPanel>
-                                <Grid Grid.Row="6" Margin="0,5,0,0">
+                                <StackPanel Grid.Row="6" Orientation="Vertical">
+                                    <TextBlock Name="TextBlockDir" Text="Файл" Foreground="White" Margin="15,5,0,0"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                        <TextBox Name="TextBoxRazrab" Foreground="Black" Width="250" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0"/>
+                                        <Button Visibility="Visible" ToolTip="Добавить файл" Name="ButtonAddFile" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}">
+                                            <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30"/>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Grid Grid.Row="7" Margin="0,5,0,0">
                                     <Button Visibility="Hidden" ToolTip="Добавить деталь" Name="ButtonAddDetailInDB" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonAddDetailInDB_Click">
                                         <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30"/>
                                     </Button>
@@ -220,7 +230,6 @@
                         
                     </TreeView>
                     <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Top" Height="40" HorizontalAlignment="Center">
-                        
                         <Button Name="Button_detail" ToolTip="Детали" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30"  Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_detail_Click">
                             <materialDesign:PackIcon Kind="Graphql" Width="30" Height="30"/>
                         </Button>
