@@ -59,6 +59,8 @@ namespace Fttd
             switch (file_type)
             {
                 case "Задание": Dir_file_copy_in = Dir_copy_in + "\\Задания\\" + File; break;
+                case "График": Dir_file_copy_in = Dir_copy_in + "\\Графики\\" + File; break;
+                case "Служебная": Dir_file_copy_in = Dir_copy_in + "\\Служебные\\" + File; break;
                 default: Dir_file_copy_in = Dir_copy_in + "\\" + name + "_" + index + "\\" + File; break;
             }
         }
