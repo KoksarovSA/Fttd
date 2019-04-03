@@ -1419,6 +1419,9 @@ namespace Fttd
             ComboBoxZad.IsEditable = false;
             DataGridFiles.ItemsSource = null;
             DataGridFiles.Items.Refresh();
+            ButtonAddFiles.IsEnabled = true;
+            ButtonReadFiles.IsEnabled = true;
+            ButtonRemoveFiles.IsEnabled = true;
         }
 
         //Кнопка отображения приспособлений
@@ -1431,6 +1434,9 @@ namespace Fttd
             ReadAddPanel(a, b);
             DataGridFiles.ItemsSource = null;
             DataGridFiles.Items.Refresh();
+            ButtonAddFiles.IsEnabled = true;
+            ButtonReadFiles.IsEnabled = true;
+            ButtonRemoveFiles.IsEnabled = true;
         }
 
         //Кнопка отображения заданий
@@ -1445,6 +1451,9 @@ namespace Fttd
             ComboBoxZad.IsEditable = true;
             DataGridFiles.ItemsSource = null;
             DataGridFiles.Items.Refresh();
+            ButtonAddFiles.IsEnabled = false;
+            ButtonReadFiles.IsEnabled = false;
+            ButtonRemoveFiles.IsEnabled = false;
         }
 
         //Кнопка отображения проектов
@@ -1458,6 +1467,9 @@ namespace Fttd
             ComboBoxProekt.IsEditable = true;
             DataGridFiles.ItemsSource = null;
             DataGridFiles.Items.Refresh();
+            ButtonAddFiles.IsEnabled = false;
+            ButtonReadFiles.IsEnabled = false;
+            ButtonRemoveFiles.IsEnabled = false;
         }
 
         //Кнопка отображения графиков
@@ -1471,6 +1483,9 @@ namespace Fttd
             ComboBoxProekt.IsEditable = false;
             DataGridFiles.ItemsSource = null;
             DataGridFiles.Items.Refresh();
+            ButtonAddFiles.IsEnabled = false;
+            ButtonReadFiles.IsEnabled = false;
+            ButtonRemoveFiles.IsEnabled = false;
         }
 
         //Кнопка отображения служебных
@@ -1483,6 +1498,9 @@ namespace Fttd
             ReadAddPanel(a, b);
             DataGridFiles.ItemsSource = null;
             DataGridFiles.Items.Refresh();
+            ButtonAddFiles.IsEnabled = false;
+            ButtonReadFiles.IsEnabled = false;
+            ButtonRemoveFiles.IsEnabled = false;
         }
 
         /// <summary>
