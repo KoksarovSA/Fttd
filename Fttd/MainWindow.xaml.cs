@@ -77,6 +77,21 @@ namespace Fttd
                         dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'");                        
                         break;
                     }
+                case "Приспособление":
+                    if(File.Exists(work.Dir_file_copy_in))
+                        {
+                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе.", "Ошибка");
+                    }
+                        else
+                        {
+                        Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
+                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                        string[] vs = work.Dir_file_copy_in.Split('\\');
+                        string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
+                        Dbaccess dbaccess = new Dbaccess();
+                        dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'");
+                    }
+                    break;
                 default:
                     {
                         if (File.Exists(work.Dir_file_copy_in))
@@ -1274,9 +1289,59 @@ namespace Fttd
         {
             try
             {
+                switch (TextBlock_type.Text)
+                {
+                    case "Детали":
+                        try
+                        {
+                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
+                            string[] name = textItem.Split('|');
+                            CopyFile(TextBoxFiles.Text, name[1], name[0], TextBoxNameFiles.Text, ComboBoxTypeFiles.Text, TextBoxNote.Text);
+                        }
+                        catch { }
+                        break;
+                    case "Приспособления":
+                        try
+                        {
+                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
+                            CopyFile(TextBoxFiles.Text, textItem, "Приспособление", TextBoxNameFiles.Text, ComboBoxTypeFiles.Text, TextBoxNote.Text);
+                        }
+                        catch { }
+                        break;
+                    default: break;
+                }
+
+            }
+            catch { }
+            SelectedTreeViewItem();
+        }
+
+        // Кнопка изменения файла
+        private void ButtonReadFilesInDB_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
                 string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                 string[] name = textItem.Split('|');
-                CopyFile(TextBoxFiles.Text, name[1], name[0],TextBoxNameFiles.Text ,ComboBoxTypeFiles.Text, TextBoxNote.Text);
+                Dbaccess dbaccess = new Dbaccess();
+                dbaccess.DbRead("UPDATE [stack_files] SET [file_type] = '" + ComboBoxTypeFiles.Text + "', [file_note] = '" + TextBoxNote.Text + "' WHERE [detail_index] = '" + name[1] + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
+            }
+            catch { }
+            SelectedTreeViewItem();
+        }
+
+        // Кнопка удаления файла
+        private void ButtonRemoveFilesInDB_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
+                string[] name = textItem.Split('|');
+                Dbaccess dbaccess = new Dbaccess();
+                dbaccess.DbRead("DELETE FROM [stack_files] WHERE [detail_index] = '" + name[1] + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
+                if (ComboBoxTypeFiles.Text == "Задание")
+                { MessageBox.Show("Файл задания может быть привязан к другим деталям. Привязка к данной детали будет удалена.", "Удаление"); }
+                else { Param_in param = new Param_in(); File.Delete(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
             }
             catch { }
             SelectedTreeViewItem();
@@ -1302,7 +1367,7 @@ namespace Fttd
                             Param_in param = new Param_in();
                             Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
                         }
-                        catch { } 
+                        catch { }
                         break;
                     case "Приспособления":
                         try
@@ -1349,38 +1414,6 @@ namespace Fttd
 
         }
 
-        // Кнопка изменения файла
-        private void ButtonReadFilesInDB_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
-                string[] name = textItem.Split('|');
-                Dbaccess dbaccess = new Dbaccess();
-                dbaccess.DbRead("UPDATE [stack_files] SET [file_type] = '" + ComboBoxTypeFiles.Text + "', [file_note] = '" + TextBoxNote.Text + "' WHERE [detail_index] = '" + name[1] + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
-            }
-            catch { }
-            SelectedTreeViewItem();
-        }
-
-        // Кнопка удаления файла
-        private void ButtonRemoveFilesInDB_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
-                string[] name = textItem.Split('|');
-                Dbaccess dbaccess = new Dbaccess();
-                dbaccess.DbRead("DELETE FROM [stack_files] WHERE [detail_index] = '" + name[1] + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
-                if (ComboBoxTypeFiles.Text == "Задание")
-                { MessageBox.Show("Файл задания может быть привязан к другим деталям. Привязка к данной детали будет удалена.", "Удаление"); }
-                else { Param_in param = new Param_in(); File.Delete(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
-            }
-            catch { }
-            SelectedTreeViewItem();
-        }
-
-
         //    //var bc = new BrushConverter();
         //    //grid0.Background = (Brush)bc.ConvertFrom("#FF7AB9D1");
         //    //grid1.Background = (Brush)bc.ConvertFrom("#FF157599");
@@ -1389,7 +1422,7 @@ namespace Fttd
         //    //DataGridFiles.Background = (Brush)bc.ConvertFrom("#FF7AB9D1");
         //    //DataGridFiles.AlternatingRowBackground = (Brush)bc.ConvertFrom("#FF7AB9D1");
 
-       
+
 
         // Чекбокс отображения меню включен(отображение по проектам) 
         private void CheckBoxTreeViewSet_Checked(object sender, RoutedEventArgs e)
