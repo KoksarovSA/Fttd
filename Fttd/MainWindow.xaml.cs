@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -53,7 +54,7 @@ namespace Fttd
         /// <param name="name">Название детали</param>
         /// <param name="file_type">Тип файла</param>
         /// <param name="note">Примечание</param>
-        public void CopyFile(string dirout, string index, string name, string newfilename, string file_type = "None", string note = "None")
+        public async void CopyFile(string dirout, string index, string name, string newfilename, string file_type = "None", string note = "None")
         {
             Work_with_files work = new Work_with_files(dirout, index, name, file_type, newfilename);
             switch (file_type)
@@ -63,24 +64,9 @@ namespace Fttd
                         string[] vs = work.Dir_file_copy_in.Split('\\');
                         string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
                         Dbaccess dbaccess = new Dbaccess();
-                        dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'");                        
+                        await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'"));                        
                         break;
                     }
-                case "Приспособление":
-                    if(File.Exists(work.Dir_file_copy_in))
-                        {
-                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе.", "Ошибка");
-                    }
-                        else
-                        {
-                        Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
-                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
-                        string[] vs = work.Dir_file_copy_in.Split('\\');
-                        string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
-                        Dbaccess dbaccess = new Dbaccess();
-                        dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'");
-                    }
-                    break;
                 default:
                     {
                         if (TextBlock_type.Text == "Приспособления")
@@ -92,11 +78,11 @@ namespace Fttd
                             else
                             {
                                 Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
-                                File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                await Task.Run(() => File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in));
                                 string[] vs = work.Dir_file_copy_in.Split('\\');
                                 string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
                                 Dbaccess dbaccess = new Dbaccess();
-                                dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'");
+                                await Task.Run(() => dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'"));
                             }
                         }
                         else
@@ -118,6 +104,7 @@ namespace Fttd
                         break;
                     }
             }
+            SelectedTreeViewItem();
         }
 
         /// <summary>
@@ -125,7 +112,6 @@ namespace Fttd
         /// </summary>
         public void TreeviewSet()
         {
-            Loading.Visibility = Visibility.Visible;
             TreeViewDet.Items.Clear();
             Dbaccess dbaccess = new Dbaccess();
             switch(TextBlock_type.Text)
@@ -367,7 +353,6 @@ namespace Fttd
                     break;
                 default:break;
             }
-            Loading.Visibility = Visibility.Hidden;
         }
 
         /// <summary>
@@ -1576,6 +1561,9 @@ namespace Fttd
             ButtonReadFiles.IsEnabled = true;
             ButtonRemoveFiles.IsEnabled = true;
             RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonAddDetail.Visibility = Visibility.Visible;
+            ButtonReadDetail.Visibility = Visibility.Visible;
+            ButtonRemoveDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.IsEnabled = true;
             ButtonRemoveDetail.IsEnabled = true;
         }
@@ -1594,6 +1582,9 @@ namespace Fttd
             ButtonReadFiles.IsEnabled = true;
             ButtonRemoveFiles.IsEnabled = true;
             RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonAddDetail.Visibility = Visibility.Visible;
+            ButtonReadDetail.Visibility = Visibility.Visible;
+            ButtonRemoveDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.IsEnabled = true;
             ButtonRemoveDetail.IsEnabled = true;
         }
@@ -1614,6 +1605,9 @@ namespace Fttd
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
             RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonAddDetail.Visibility = Visibility.Visible;
+            ButtonReadDetail.Visibility = Visibility.Visible;
+            ButtonRemoveDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.IsEnabled = false;
             ButtonRemoveDetail.IsEnabled = false;
         }
@@ -1633,6 +1627,9 @@ namespace Fttd
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
             RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonAddDetail.Visibility = Visibility.Visible;
+            ButtonReadDetail.Visibility = Visibility.Visible;
+            ButtonRemoveDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.IsEnabled = false;
             ButtonRemoveDetail.IsEnabled = false;
         }
@@ -1652,6 +1649,9 @@ namespace Fttd
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
             RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonAddDetail.Visibility = Visibility.Visible;
+            ButtonReadDetail.Visibility = Visibility.Visible;
+            ButtonRemoveDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.IsEnabled = true;
             ButtonRemoveDetail.IsEnabled = true;
         }
@@ -1670,6 +1670,9 @@ namespace Fttd
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
             RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonAddDetail.Visibility = Visibility.Visible;
+            ButtonReadDetail.Visibility = Visibility.Visible;
+            ButtonRemoveDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.IsEnabled = true;
             ButtonRemoveDetail.IsEnabled = true;
         }

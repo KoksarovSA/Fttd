@@ -186,7 +186,7 @@ namespace Fttd
                 cmd.Connection = con;
                 cmd.CommandText = "" + query + "";
                 OleDbDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                while(reader.Read())
                 {
                     string[] vs = new string[reader.FieldCount];
                     for (int i = 0; i < reader.FieldCount; ++i)

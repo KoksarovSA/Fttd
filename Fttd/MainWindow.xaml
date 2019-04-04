@@ -13,7 +13,7 @@
         TextOptions.TextRenderingMode="Auto"        
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"        
-        Title="MainWindow" Height="700" Width="1100" WindowStartupLocation="CenterScreen" WindowStyle="None" MinWidth="800" MinHeight="400" ResizeMode="CanResizeWithGrip">
+        Title="MainWindow" Height="700" Width="1100" WindowStartupLocation="CenterScreen" MinWidth="800" MinHeight="400" ResizeMode="CanResizeWithGrip" WindowStyle="None" AllowsTransparency="True">
     <Grid>
         <Grid Background="#FF157599" MouseLeftButtonDown="Grid_MouseLeftButtonDown">
             <Grid.ColumnDefinitions>
@@ -43,7 +43,7 @@
                         <CheckBox Name="CheckBoxTreeViewSet" Style="{StaticResource MaterialDesignSwitchToggleButton}" Margin="10,0,0,0" Checked="CheckBoxTreeViewSet_Checked" Unchecked="CheckBoxTreeViewSet_Unchecked" Click="CheckBoxTreeViewSet_Click" />
                         <TextBlock Text="Отображение по проектам" Foreground="White" Margin="15,5,0,0"/>
                     </StackPanel>
-                    <TextBlock Text="FTTD v.1.0.9" Foreground="White" Margin="15,5,0,0"/>
+                    <TextBlock Text="FTTD v.1.1.0" Foreground="White" Margin="15,5,0,0"/>
                 </StackPanel>
             </Grid>
             <Grid Name="grid0" Grid.Column="0" Background="#FF157599">
@@ -254,7 +254,7 @@
             </Button>
         </StackPanel>
         <Grid>
-            <Image Name="Loading" VerticalAlignment="Center" HorizontalAlignment="Center" Source="Resources/ZAGRUZKA.gif" Stretch="None" Visibility="Hidden" />
+            <TextBlock Name="Loading" Text="" Foreground="White" FontSize="30" Visibility="Visible" VerticalAlignment="Center" HorizontalAlignment="Center" />
         </Grid>
     </Grid>
 </Window>
