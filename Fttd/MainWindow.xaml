@@ -253,5 +253,8 @@
                 <materialDesign:PackIcon Kind="Power" Width="30" Height="30"/>
             </Button>
         </StackPanel>
+        <Grid>
+            <Image Name="Loading" VerticalAlignment="Center" HorizontalAlignment="Center" Source="Resources/ZAGRUZKA.gif" Stretch="None" Visibility="Hidden" />
+        </Grid>
     </Grid>
 </Window>

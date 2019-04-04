@@ -125,6 +125,7 @@ namespace Fttd
         /// </summary>
         public void TreeviewSet()
         {
+            Loading.Visibility = Visibility.Visible;
             TreeViewDet.Items.Clear();
             Dbaccess dbaccess = new Dbaccess();
             switch(TextBlock_type.Text)
@@ -365,21 +366,9 @@ namespace Fttd
                     }
                     break;
                 default:break;
-            }  
+            }
+            Loading.Visibility = Visibility.Hidden;
         }
-
-        /// <summary>
-        /// Метод для действия при выделении TreeViewDetItem 
-        /// </summary>
-        //public void SelectedTreeViewItem(string index)
-        //{
-        //    if (TreeViewDet.SelectedItem != null)
-        //    {
-        //        TextBlockPD.Text = GetNoteDetail(index);
-        //        if (index != "") SetDataGrid(index);
-        //    }
-        //    else TextBlockPD.Text = "";
-        //}
 
         /// <summary>
         /// Метод для действия при выделении TreeViewDetItem 
@@ -833,86 +822,121 @@ namespace Fttd
         // Кнопка открытия меню добавления детали
         private void ButtonAddDetail_Click(object sender, RoutedEventArgs e)
         {
-            switch (RowDetail.Height.Value)
+            int x = 0;
+            switch (TextBlock_type.Text)
             {
-                case 40:
-                    RowDetail.Height = new GridLength(value: 470, type: GridUnitType.Pixel);
-                    ButtonAddDetailInDB.Visibility = Visibility.Visible;
-                    ButtonReadDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonRemoveDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonReadDetail.Visibility = Visibility.Hidden;
-                    ButtonRemoveDetail.Visibility = Visibility.Hidden;
-                    break;
-                case 470:
-                    RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
-                    ButtonAddDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonReadDetail.Visibility = Visibility.Visible;
-                    ButtonRemoveDetail.Visibility = Visibility.Visible;
-                    break;
+                case "Детали": x = 460; break;
+                case "Приспособления": x = 280; break;
+                case "Задания": x = 280; break;
+                case "Проекты": x = 160; break;
+                case "Графики": x = 280; break;
+                case "Служебные": x = 280; break;
                 default: break;
+            }
+            if (RowDetail.Height.Value == x)
+            {
+                RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+                ButtonAddDetailInDB.Visibility = Visibility.Hidden;
+                ButtonReadDetail.Visibility = Visibility.Visible;
+                ButtonRemoveDetail.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                RowDetail.Height = new GridLength(value: x, type: GridUnitType.Pixel);
+                ButtonAddDetailInDB.Visibility = Visibility.Visible;
+                ButtonReadDetailInDB.Visibility = Visibility.Hidden;
+                ButtonRemoveDetailInDB.Visibility = Visibility.Hidden;
+                ButtonReadDetail.Visibility = Visibility.Hidden;
+                ButtonRemoveDetail.Visibility = Visibility.Hidden;
+                TextBoxDirFile.IsEnabled = true;
+                ButtonAddFile.IsEnabled = true;
             }
         }
 
         // Кнопка открытия меню изменения детали
         private void ButtonReadDetail_Click(object sender, RoutedEventArgs e)
         {
-            switch (RowDetail.Height.Value)
+            int x = 0;
+            switch (TextBlock_type.Text)
             {
-                case 40:
-                    RowDetail.Height = new GridLength(value: 470, type: GridUnitType.Pixel);
-                    ButtonReadDetailInDB.Visibility = Visibility.Visible; ;
-                    ButtonAddDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonRemoveDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonAddDetail.Visibility = Visibility.Hidden;
-                    ButtonRemoveDetail.Visibility = Visibility.Hidden;
-                    ComboBoxIndex.IsEnabled = false;
-                    ComboBoxNPU.IsEnabled = false;
-                    break;
-                case 470:
-                    RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
-                    ButtonReadDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonAddDetail.Visibility = Visibility.Visible;
-                    ButtonRemoveDetail.Visibility = Visibility.Visible;
-                    ComboBoxIndex.IsEnabled = true;
-                    ComboBoxNPU.IsEnabled = true;
-                    break;
+                case "Детали": x = 460; break;
+                case "Приспособления": x = 280; break;
+                case "Задания": x = 280; break;
+                case "Проекты": x = 160; break;
+                case "Графики": x = 280; break;
+                case "Служебные": x = 280; break;
                 default: break;
             }
+            if (RowDetail.Height.Value == x)
+            {
+                RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+                ButtonReadDetailInDB.Visibility = Visibility.Hidden;
+                ButtonAddDetail.Visibility = Visibility.Visible;
+                ButtonRemoveDetail.Visibility = Visibility.Visible;
+                ComboBoxIndex.IsEnabled = true;
+                ComboBoxNPU.IsEnabled = true;
+            }
+            else
+            {
+                RowDetail.Height = new GridLength(value: x, type: GridUnitType.Pixel);
+                ButtonReadDetailInDB.Visibility = Visibility.Visible; ;
+                ButtonAddDetailInDB.Visibility = Visibility.Hidden;
+                ButtonRemoveDetailInDB.Visibility = Visibility.Hidden;
+                ButtonAddDetail.Visibility = Visibility.Hidden;
+                ButtonRemoveDetail.Visibility = Visibility.Hidden;
+                ComboBoxIndex.IsEnabled = false;
+                ComboBoxNPU.IsEnabled = false;
+                TextBoxDirFile.IsEnabled = true;
+                ButtonAddFile.IsEnabled = true;
+            }            
         }
 
         // Кнопка открытия меню удаления детали
         private void ButtonRemoveDetail_Click(object sender, RoutedEventArgs e)
         {
-            switch (RowDetail.Height.Value)
+            int x = 0;
+            switch (TextBlock_type.Text)
             {
-                case 40:
-                    RowDetail.Height = new GridLength(value: 470, type: GridUnitType.Pixel);
-                    ButtonRemoveDetailInDB.Visibility = Visibility.Visible; ;
-                    ButtonAddDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonReadDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonAddDetail.Visibility = Visibility.Hidden;
-                    ButtonReadDetail.Visibility = Visibility.Hidden;
-                    ComboBoxName.IsEnabled = false;
-                    ComboBoxIndex.IsEnabled = false;
-                    ComboBoxProekt.IsEnabled = false;
-                    ComboBoxZad.IsEnabled = false;
-                    ComboBoxNPU.IsEnabled = false;
-                    ComboBoxRazrab.IsEnabled = false;
-                    break;
-                case 470:
-                    RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
-                    ButtonRemoveDetailInDB.Visibility = Visibility.Hidden;
-                    ButtonAddDetail.Visibility = Visibility.Visible;
-                    ButtonReadDetail.Visibility = Visibility.Visible;
-                    ComboBoxName.IsEnabled = true;
-                    ComboBoxIndex.IsEnabled = true;
-                    ComboBoxProekt.IsEnabled = true;
-                    ComboBoxZad.IsEnabled = true;
-                    ComboBoxNPU.IsEnabled = true;
-                    ComboBoxRazrab.IsEnabled = true;
-                    break;
+                case "Детали": x = 460; break;
+                case "Приспособления": x = 280; break;
+                case "Задания": x = 280; break;
+                case "Проекты": x = 160; break;
+                case "Графики": x = 280; break;
+                case "Служебные": x = 280; break;
                 default: break;
             }
+            if (RowDetail.Height.Value == x)
+            {
+                RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+                ButtonRemoveDetailInDB.Visibility = Visibility.Hidden;
+                ButtonAddDetail.Visibility = Visibility.Visible;
+                ButtonReadDetail.Visibility = Visibility.Visible;
+                ComboBoxName.IsEnabled = true;
+                ComboBoxIndex.IsEnabled = true;
+                ComboBoxProekt.IsEnabled = true;
+                ComboBoxZad.IsEnabled = true;
+                ComboBoxNPU.IsEnabled = true;
+                ComboBoxRazrab.IsEnabled = true;
+                TextBoxDirFile.IsEnabled = true;
+                ButtonAddFile.IsEnabled = true;
+            }
+            else
+            {
+                RowDetail.Height = new GridLength(value: x, type: GridUnitType.Pixel);
+                ButtonRemoveDetailInDB.Visibility = Visibility.Visible; ;
+                ButtonAddDetailInDB.Visibility = Visibility.Hidden;
+                ButtonReadDetailInDB.Visibility = Visibility.Hidden;
+                ButtonAddDetail.Visibility = Visibility.Hidden;
+                ButtonReadDetail.Visibility = Visibility.Hidden;
+                ComboBoxName.IsEnabled = false;
+                ComboBoxIndex.IsEnabled = false;
+                ComboBoxProekt.IsEnabled = false;
+                ComboBoxZad.IsEnabled = false;
+                ComboBoxNPU.IsEnabled = false;
+                ComboBoxRazrab.IsEnabled = false;
+                TextBoxDirFile.IsEnabled = false;
+                ButtonAddFile.IsEnabled = false;
+            }         
         }
 
         // Кнопка открытия меню добавления файла
@@ -1551,6 +1575,9 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = true;
             ButtonReadFiles.IsEnabled = true;
             ButtonRemoveFiles.IsEnabled = true;
+            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonReadDetail.IsEnabled = true;
+            ButtonRemoveDetail.IsEnabled = true;
         }
 
         //Кнопка отображения приспособлений
@@ -1566,6 +1593,9 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = true;
             ButtonReadFiles.IsEnabled = true;
             ButtonRemoveFiles.IsEnabled = true;
+            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonReadDetail.IsEnabled = true;
+            ButtonRemoveDetail.IsEnabled = true;
         }
 
         //Кнопка отображения заданий
@@ -1583,6 +1613,9 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
+            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonReadDetail.IsEnabled = false;
+            ButtonRemoveDetail.IsEnabled = false;
         }
 
         //Кнопка отображения проектов
@@ -1599,6 +1632,9 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
+            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonReadDetail.IsEnabled = false;
+            ButtonRemoveDetail.IsEnabled = false;
         }
 
         //Кнопка отображения графиков
@@ -1615,6 +1651,9 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
+            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonReadDetail.IsEnabled = true;
+            ButtonRemoveDetail.IsEnabled = true;
         }
 
         //Кнопка отображения служебных
@@ -1630,6 +1669,9 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
+            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            ButtonReadDetail.IsEnabled = true;
+            ButtonRemoveDetail.IsEnabled = true;
         }
 
         /// <summary>
