@@ -12,8 +12,10 @@
                 <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <ScrollViewer Grid.Row="1" HorizontalAlignment="Stretch" Height="auto" Margin="0,0,0,0" VerticalAlignment="Stretch" Width="auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <Grid Name="gr"/>
+            <ScrollViewer Grid.Row="1" HorizontalAlignment="Stretch" Height="auto" Margin="0,0,0,0" VerticalAlignment="Stretch" Width="auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Foreground="Black">
+                <Border BorderThickness="1" BorderBrush="Black">
+                    <Grid Name="gr" Background="#FFCAF1FF" />
+                </Border>
             </ScrollViewer>
         </Grid>
     </Grid>

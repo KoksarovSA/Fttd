@@ -587,7 +587,9 @@ namespace Fttd
                             string[] vs = dbaccess.Querydata[i];
                             string current = "Нет";
                             if (vs[2] == "True") { chTaskIsCurrent.IsChecked = true; current = "Да"; }
-                            x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + vs[3] + "\n" + "Выполнить до: " + vs[4];
+                            DateTime dateTime1 = DateTime.Parse(vs[3]);
+                            DateTime dateTime2 = DateTime.Parse(vs[4]);
+                            x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\n" + "Выполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
                             ComboBoxZad.Text = vs[0];
                             ComboBoxProekt.Text = vs[1];
                             data1.SelectedDate = DateTime.Parse(vs[3]);

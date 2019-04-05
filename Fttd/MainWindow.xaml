@@ -51,7 +51,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Name="RowDetail" Height="40"/>
                         <RowDefinition Height ="*"/>
-                        <RowDefinition Height ="40"/>
+                        <RowDefinition Height ="45"/>
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Vertical" Margin="10,10,0,0">
                         <Grid Margin="0,0,20,0">
@@ -148,8 +148,8 @@
                         </StackPanel>
                     </StackPanel>
                     <TreeView Grid.Row="1" Name="TreeViewDet" HorizontalAlignment="Stretch" Margin="10" VerticalAlignment="Stretch" Width="auto" Background="#FF7AB9D1" Foreground="Black" FontSize="14" Height="auto" SelectedItemChanged="TreeViewDet_SelectedItemChanged"/>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Top" Height="40" HorizontalAlignment="Center">
-                        <Button Name="Button_detail" ToolTip="Детали" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30"  Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_detail_Click">
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Top" Height="40" HorizontalAlignment="Center" Margin="0">
+                        <Button Name="Button_detail" ToolTip="Детали" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30"  Background="{x:Null}" BorderBrush="{x:Null}" Margin="0" Click="Button_detail_Click">
                             <materialDesign:PackIcon Kind="Graphql" Width="30" Height="30"/>
                         </Button>
                         <Button Name="Button_device" ToolTip="Приспособления" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_device_Click">
@@ -270,7 +270,7 @@
             </Button>
         </StackPanel>
         <Grid>
-            <TextBlock Name="Loading" Text="" Foreground="White" FontSize="30" Visibility="Visible" VerticalAlignment="Center" HorizontalAlignment="Center" />
+            <TextBlock Name="Loading" Text="" Foreground="White" FontSize="30" Visibility="Visible" VerticalAlignment="Center" HorizontalAlignment="Center"/>
         </Grid>
     </Grid>
 </Window>
