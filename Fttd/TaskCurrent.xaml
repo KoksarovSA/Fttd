@@ -1,0 +1,20 @@
+﻿<Window x:Class="Fttd.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Fttd"
+        mc:Ignorable="d"
+        Title="Активные задания" Height="450" Width="800" ResizeMode="CanResizeWithGrip" Icon="folderdevelopment.ico" ShowInTaskbar="False" WindowStartupLocation="CenterScreen" AllowsTransparency="True" WindowStyle="None">
+    <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <ScrollViewer Grid.Row="1" HorizontalAlignment="Stretch" Height="auto" Margin="0,0,0,0" VerticalAlignment="Stretch" Width="auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Grid Name="gr"/>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

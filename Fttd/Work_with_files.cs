@@ -236,7 +236,30 @@ namespace Fttd
         /// <param name="tab">Название таблицы в базе</param>
         /// <param name="list1">Список названий столбцов через запятую, куда будут добавляться данные</param>
         /// <param name="list2">Список данных через запятую(количество данных должно совпадать с количеством переданных столбцов в list1)</param>
-        public void Dbinsert(string tab, string list1 = "", string list2 = "")
+        public void Dbinsert(string tab, string list1, string list2)
+        {
+            OleDbConnection con = new OleDbConnection();
+            try
+            {
+                querydata.Clear();
+                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + GetDirDB() + ";Jet OLEDB:Database Password=derpassword";
+                con.Open();
+                OleDbCommand cmd = new OleDbCommand();
+                cmd.Connection = con;
+                cmd.CommandText = "INSERT INTO [" + tab + "] (" + list1 + ") VALUES (" + list2 + ")";
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception e) { MessageBox.Show("Проверьте правильность запроса." + e, "Ошибка"); }
+            con.Close();
+        }
+
+        /// <summary>
+        /// Метод добавляющий bool данные в таблицу базы данных
+        /// </summary>
+        /// <param name="tab">Название таблицы в базе</param>
+        /// <param name="list1">Список названий столбцов через запятую, куда будут добавляться данные</param>
+        /// <param name="list2">Список данных через запятую(количество данных должно совпадать с количеством переданных столбцов в list1)</param>
+        public void Dbinsertbool(string tab, string list1, bool list2)
         {
             OleDbConnection con = new OleDbConnection();
             try

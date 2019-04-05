@@ -81,6 +81,8 @@
                                     <RowDefinition Name="rowproject" Height="60"/>
                                     <RowDefinition Name="rownpu" Height="60"/>
                                     <RowDefinition Name="rowrazrab" Height="60"/>
+                                    <RowDefinition Name="rowdata" Height="0"/>
+                                    <RowDefinition Name="rowcurrent" Height="0"/>
                                     <RowDefinition Name="rowdir" Height="0"/>
                                     <RowDefinition Name="rowbutton" Height="50"/>
                                 </Grid.RowDefinitions>
@@ -109,6 +111,20 @@
                                     <ComboBox Name="ComboBoxRazrab" Foreground="Black" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
                                 </StackPanel>
                                 <StackPanel Grid.Row="6" Orientation="Vertical">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Name="TextBlockData1" Text="Дата выдачи    " Foreground="White" Margin="15,15,0,0"/>
+                                        <DatePicker Name="data1" Width="150" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Foreground="White" BorderBrush="White"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Name="TextBlockData2" Text="Выполнить до  " Foreground="White" Margin="15,15,0,0"/>
+                                        <DatePicker Name="data2" Width="150" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Foreground="White" BorderBrush="White"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Grid.Row="7" Orientation="Horizontal">
+                                    <CheckBox Name="chTaskIsCurrent" Style="{StaticResource MaterialDesignSwitchToggleButton}" Padding="10,0,0,0" Margin="10,0,0,0"/>
+                                    <TextBlock Name="TextBlockIsCurrent" Text="Актуальное задание" Foreground="White" Margin="10,10,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="8" Orientation="Vertical">
                                     <TextBlock Name="TextBlockDir" Text="Файл" Foreground="White" Margin="15,5,0,0"/>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
                                         <TextBox Name="TextBoxDirFile" Foreground="Black" Width="250" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0"/>
@@ -117,7 +133,7 @@
                                         </Button>
                                     </StackPanel>
                                 </StackPanel>
-                                <Grid Grid.Row="7" Margin="0,5,0,0">
+                                <Grid Grid.Row="9" Margin="0,5,0,0">
                                     <Button Visibility="Hidden" ToolTip="Добавить деталь" Name="ButtonAddDetailInDB" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonAddDetailInDB_Click">
                                         <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30"/>
                                     </Button>

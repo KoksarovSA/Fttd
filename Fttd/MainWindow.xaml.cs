@@ -28,6 +28,8 @@ namespace Fttd
                 TextBoxBD.Text = param.GetDirDB();
                 TextBoxDir.Text = param.GetDirFiles();
                 BackupFTTDDB();
+                Window1 window = new Window1();
+                window.Show();
             }
             catch (Exception e){ MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
         }
@@ -235,9 +237,12 @@ namespace Fttd
                 case "Задания":
                     if (CheckBoxTreeViewSet.IsChecked == false)
                     {
-                        dbaccess.Dbselect("SELECT [task], [project] FROM [task] ORDER BY [task]");
+                        dbaccess.Dbselect("SELECT [task] FROM [task] ORDER BY [task]");
                         ComboBoxZad.Items.Clear();
                         ComboBoxTask.Items.Clear();
+                        data1.Text = "";
+                        data2.Text = "";
+                        chTaskIsCurrent.IsChecked = false;
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
@@ -246,6 +251,7 @@ namespace Fttd
                             TreeViewDet.Items.Add(IT2);
                             ComboBoxZad.Items.Add(vs[0]);
                             ComboBoxTask.Items.Add(vs[0]);
+
                         }
                         dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                         ComboBoxProekt.Items.Clear();
@@ -259,6 +265,9 @@ namespace Fttd
                     {
                         dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                         ComboBoxProekt.Items.Clear();
+                        data1.Text = "";
+                        data2.Text = "";
+                        chTaskIsCurrent.IsChecked = false;
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
@@ -362,6 +371,9 @@ namespace Fttd
         {           
             try
             {
+                data1.Text = "";
+                data2.Text = "";
+                chTaskIsCurrent.IsChecked = false;
                 string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                 switch (TextBlock_type.Text)
                 {
@@ -568,14 +580,18 @@ namespace Fttd
                     try
                     {
                         Dbaccess dbaccess = new Dbaccess();
-                        dbaccess.Dbselect("SELECT [task], [project] FROM [task] WHERE [task] = '" + index + "'");
+                        dbaccess.Dbselect("SELECT [task], [project], [iscurrent], [datein], [dateout] FROM [task] WHERE [task] = '" + index + "'");
                         string x = "";
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
-                            x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1];
+                            string current = "Нет";
+                            if (vs[2] == "True") { chTaskIsCurrent.IsChecked = true; current = "Да"; }
+                            x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + vs[3] + "\n" + "Выполнить до: " + vs[4];
                             ComboBoxZad.Text = vs[0];
                             ComboBoxProekt.Text = vs[1];
+                            data1.SelectedDate = DateTime.Parse(vs[3]);
+                            data2.SelectedDate = DateTime.Parse(vs[4]);
                         }
                         return x;
                     }
@@ -812,7 +828,7 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 280; break;
+                case "Задания": x = 390; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
                 case "Служебные": x = 280; break;
@@ -846,7 +862,7 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 280; break;
+                case "Задания": x = 390; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
                 case "Служебные": x = 280; break;
@@ -884,7 +900,7 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 280; break;
+                case "Задания": x = 390; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
                 case "Служебные": x = 280; break;
@@ -1064,7 +1080,7 @@ namespace Fttd
                                         File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
                                     }
                                     Dbaccess dbaccess = new Dbaccess();
-                                    dbaccess.Dbinsert("task", "[task], [project], [dir]", "'" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + TextBoxDirFile.Text + "'");
+                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + TextBoxDirFile.Text + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
                                     TreeviewSet();
                                 }
                                 catch (Exception ex){ MessageBox.Show(ex + "", "Ошибка"); }
@@ -1550,7 +1566,7 @@ namespace Fttd
         {
             TextBlock_type.Text = "Детали";
             TreeviewSet();
-            int[] a = { 60, 60, 60, 60, 60, 60, 0, 60 };
+            int[] a = { 60, 60, 60, 60, 60, 60, 0, 0, 0, 60 };
             string[] b = { "Добавить деталь", "Изменить деталь", "Удалить деталь", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Разработал" };
             ReadAddPanel(a, b);
             ComboBoxProekt.IsEditable = false;
@@ -1573,7 +1589,7 @@ namespace Fttd
         {
             TextBlock_type.Text = "Приспособления";
             TreeviewSet();
-            int[] a = { 60, 60, 0, 0, 0, 60, 0, 60 };
+            int[] a = { 60, 60, 0, 0, 0, 60, 0, 0, 0, 60 };
             string[] b = { "Добавить приспособление", "Изменить приспособление", "Удалить приспособление", "Индекс приспособления", "Название приспособления", "Задание", "Проект", "№ Плана управления", "Разработал" };
             ReadAddPanel(a, b);
             DataGridFiles.ItemsSource = null;
@@ -1594,7 +1610,7 @@ namespace Fttd
         {
             TextBlock_type.Text = "Задания";
             TreeviewSet();
-            int[] a = { 0, 0, 60, 60, 0, 0, 60, 60 };
+            int[] a = { 0, 0, 60, 60, 0, 0, 60, 80, 30, 60 };
             string[] b = { "Добавить задание", "Изменить задание", "Удалить задание", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Разработал" };
             ReadAddPanel(a, b);
             ComboBoxProekt.IsEditable = false;
@@ -1617,7 +1633,7 @@ namespace Fttd
         {
             TextBlock_type.Text = "Проекты";
             TreeviewSet();
-            int[] a = { 0, 0, 0, 60, 0, 0, 0, 60 };
+            int[] a = { 0, 0, 0, 60, 0, 0, 0, 0, 0, 60 };
             string[] b = { "Добавить проект", "Изменить проект", "Удалить проект", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Разработал" };
             ReadAddPanel(a, b);
             ComboBoxProekt.IsEditable = true;
@@ -1639,7 +1655,7 @@ namespace Fttd
         {
             TextBlock_type.Text = "Графики";
             TreeviewSet();
-            int[] a = { 0, 60, 0, 60, 0, 0, 60, 60 };
+            int[] a = { 0, 60, 0, 60, 0, 0, 60, 0, 0, 60 };
             string[] b = { "Добавить график", "Изменить график", "Удалить график", "Индекс приспособления", "Название графика", "Задание", "Проект", "№ Плана управления", "Разработал" };
             ReadAddPanel(a, b);
             ComboBoxProekt.IsEditable = false;
@@ -1661,7 +1677,7 @@ namespace Fttd
         {
             TextBlock_type.Text = "Служебные";
             TreeviewSet();
-            int[] a = { 60, 60, 0, 0, 0, 0, 60, 60 };
+            int[] a = { 60, 60, 0, 0, 0, 0, 60, 0, 0, 60 };
             string[] b = { "Добавить служебную", "Изменить служебную", "Удалить служебную", "Номер служебной", "Короткое описание", "Задание", "Проект", "№ Плана управления", "Разработал" };
             ReadAddPanel(a, b);
             DataGridFiles.ItemsSource = null;
@@ -1680,7 +1696,7 @@ namespace Fttd
         /// <summary>
         /// Метод редактирующий форму добавления\редактирования\удаления 
         /// </summary>
-        /// <param name="a">Массив из 8 параметров Height ячеек данных(rowindex.Height, rowname.Height, rowtask.Height, rowproject.Height, rownpu.Height, rowrazrab.Height, rowdir.Height, rowbutton.Height)</param>
+        /// <param name="a">Массив из 10 параметров Height ячеек данных(rowindex.Height, rowname.Height, rowtask.Height, rowproject.Height, rownpu.Height, rowrazrab.Height, rowdir.Height, rowdata.Height, rowcurrent.Height, rowbutton.Height)</param>
         /// <param name="b">Массив из 9 параметров(ButtonAddDetailInDB.ToolTip, ButtonReadDetailInDB.ToolTip, ButtonRemoveDetailInDB.ToolTip, TextBlockIndex.Text, TextBlockName.Text, TextBlockTask.Text, TextBlockProject.Text, TextBlockNPU.Text, TextBlockRazrab.Text)</param>
         public void ReadAddPanel(int[] a, string[] b)
         {
@@ -1691,7 +1707,9 @@ namespace Fttd
             rownpu.Height = new GridLength(value: a[4], type: GridUnitType.Pixel);
             rowrazrab.Height = new GridLength(value: a[5], type: GridUnitType.Pixel);
             rowdir.Height = new GridLength(value: a[6], type: GridUnitType.Pixel);
-            rowbutton.Height = new GridLength(value: a[7], type: GridUnitType.Pixel);
+            rowdata.Height = new GridLength(value: a[7], type: GridUnitType.Pixel);
+            rowcurrent.Height = new GridLength(value: a[8], type: GridUnitType.Pixel);
+            rowbutton.Height = new GridLength(value: a[9], type: GridUnitType.Pixel);
             ButtonAddDetailInDB.ToolTip = b[0];
             ButtonReadDetailInDB.ToolTip = b[1];
             ButtonRemoveDetailInDB.ToolTip = b[2];
