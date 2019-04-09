@@ -3,18 +3,24 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:Fttd"
         mc:Ignorable="d"
         Title="Активные задания" Height="450" Width="800" ResizeMode="CanResizeWithGrip" Icon="folderdevelopment.ico" ShowInTaskbar="False" WindowStartupLocation="CenterScreen" AllowsTransparency="True" WindowStyle="None">
-    <Grid>
-        <Grid>
+    <Grid Background="Black">
+        <Grid Name="gridtop" Background="#FF157599" MouseLeftButtonDown="gridtop_MouseLeftButtonDown" Margin="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <ScrollViewer Grid.Row="1" HorizontalAlignment="Stretch" Height="auto" Margin="0,0,0,0" VerticalAlignment="Stretch" Width="auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Foreground="Black">
-                <Border BorderThickness="1" BorderBrush="Black">
-                    <Grid Name="gr" Background="#FFCAF1FF" />
+            <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" Margin="0,0,10,0">
+                <Button Name="ButtonExit" ToolTip="Выход" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonExit_Click">
+                    <materialDesign:PackIcon Kind="Power" Width="30" Height="30"/>
+                </Button>
+            </StackPanel>
+            <ScrollViewer Grid.Row="1" HorizontalAlignment="Stretch" Height="auto" Margin="10,0,10,15" VerticalAlignment="Stretch" Width="auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Border BorderThickness="1" BorderBrush="Black" Margin="0">
+                    <Grid Name="gr" Background="#FF7AB9D1" Margin="0" />
                 </Border>
             </ScrollViewer>
         </Grid>

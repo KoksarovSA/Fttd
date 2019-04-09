@@ -6,7 +6,7 @@ using System.Data.OleDb;
 
 namespace Fttd
 {
-    class Work_with_files : Param_in
+    class Work_with_files
     {
         private string dir_file_copy_out;
         private string dir_file_copy_in;
@@ -46,7 +46,7 @@ namespace Fttd
         public Work_with_files(string dirout, string index, string name, string file_type, string newfilename)
         {
 
-            Dir_copy_in = @"" + GetDirFiles() + "";
+            Dir_copy_in = @"" + Param_in.DirFiles + "";
             Dir_file_copy_out = dirout;
             file = newfilename;
             switch (file_type)
@@ -70,29 +70,44 @@ namespace Fttd
     /// </summary>
     class Param_in
     {
+        private static string dirDb;
+        private static string dirFiles;
+
+        public static string DirDb
+        {
+            get { return dirDb; }
+            set { dirDb = value; }
+        }
+
+        public static string DirFiles
+        {
+            get { return dirFiles; }
+            set { dirFiles = value; }
+        }
+
         /// <summary>
         /// Метод для получения последнего числа бэкапа
         /// </summary>
         /// <returns>Возвращает число месяца последнего бэкапа</returns>
         public string GetFTTDBackup()
         {
-            string dirDb = ConfigurationManager.AppSettings.Get("FTTDBackup");
-            return dirDb;
+            string day = ConfigurationManager.AppSettings.Get("FTTDBackup");
+            return day;
         }
 
         /// <summary>
         /// Метод записи последнего числа бэкапа
         /// </summary>
         /// <param name="txt_dir">Число месяца последнего бэкапа</param>
-        public void SetFTTDBackup(string txt_dir)
+        public void SetFTTDBackup(string day)
         {
             var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
             var entry = config.AppSettings.Settings["FTTDBackup"];
             if (entry == null)
-                config.AppSettings.Settings.Add("FTTDBackup", txt_dir);
+                config.AppSettings.Settings.Add("FTTDBackup", day);
             else
-                config.AppSettings.Settings["FTTDBackup"].Value = txt_dir;
+                config.AppSettings.Settings["FTTDBackup"].Value = day;
 
             config.Save(ConfigurationSaveMode.Modified);
         }
@@ -101,17 +116,17 @@ namespace Fttd
         /// Метод для получения директории файла базы данных базовой директории файлов
         /// </summary>
         /// <returns>Возвращает директорию файла базы данных</returns>
-        public string GetDirDB()
+        public static void GetDirDB()
         {
             string dirDb = ConfigurationManager.AppSettings.Get("DirDB");
-            return dirDb;
+            DirDb = dirDb;
         }
 
         /// <summary>
         /// Метод записи в конфигурацию программы директорию файла базы данных
         /// </summary>
         /// <param name="txt_dir">Директория файла базы данных</param>
-        public void SetDirDB(string txt_dir)
+        public static void SetDirDB(string txt_dir)
         {
             var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
@@ -128,17 +143,17 @@ namespace Fttd
         /// Метод для получения базовой директории файлов
         /// </summary>
         /// <returns>Возвращает базовую директорию файлов</returns>
-        public string GetDirFiles()
+        public static void GetDirFiles()
         {
             string dirDirFiles = ConfigurationManager.AppSettings.Get("DirFiles");
-            return dirDirFiles;
+            DirFiles = dirDirFiles;
         }
         
         /// <summary>
         /// Метод изменения базовой директории в конфигурации программы
         /// </summary>
         /// <param name="txt_dir">Базовая директория папки</param>
-        public void SetDirFiles(string txt_dir)
+        public static void SetDirFiles(string txt_dir)
         {
             var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
@@ -155,7 +170,7 @@ namespace Fttd
     /// <summary>
     /// Класс для работы с базой данных Microsoft Access
     /// </summary>
-    class Dbaccess : Param_in
+    class Dbaccess
     {
         /// <summary>
         /// Создание списка для данных из базы
@@ -180,7 +195,7 @@ namespace Fttd
             try
             {
                 querydata.Clear();
-                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + GetDirDB() + ";Jet OLEDB:Database Password=derpassword";
+                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Param_in.DirDb + ";Jet OLEDB:Database Password=derpassword";
                 con.Open();
                 OleDbCommand cmd = new OleDbCommand();
                 cmd.Connection = con;
@@ -212,7 +227,7 @@ namespace Fttd
             try
             {
                 querydata.Clear();
-                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + GetDirDB() + ";Jet OLEDB:Database Password=derpassword";
+                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Param_in.DirDb + ";Jet OLEDB:Database Password=derpassword";
                 con.Open();
                 OleDbCommand cmd = new OleDbCommand();
                 cmd.Connection = con;
@@ -242,7 +257,7 @@ namespace Fttd
             try
             {
                 querydata.Clear();
-                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + GetDirDB() + ";Jet OLEDB:Database Password=derpassword";
+                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Param_in.DirDb + ";Jet OLEDB:Database Password=derpassword";
                 con.Open();
                 OleDbCommand cmd = new OleDbCommand();
                 cmd.Connection = con;
@@ -265,7 +280,7 @@ namespace Fttd
             try
             {
                 querydata.Clear();
-                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + GetDirDB() + ";Jet OLEDB:Database Password=derpassword";
+                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Param_in.DirDb + ";Jet OLEDB:Database Password=derpassword";
                 con.Open();
                 OleDbCommand cmd = new OleDbCommand();
                 cmd.Connection = con;
@@ -286,7 +301,7 @@ namespace Fttd
             OleDbConnection con = new OleDbConnection();
             try
             {
-                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + GetDirDB() + ";Jet OLEDB:Database Password=derpassword";
+                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Param_in.DirDb + ";Jet OLEDB:Database Password=derpassword";
                 con.Open();
                 OleDbCommand cmd = new OleDbCommand();
                 cmd.Connection = con;
@@ -307,7 +322,7 @@ namespace Fttd
             try
             {
                 querydata.Clear();
-                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + GetDirDB() + ";Jet OLEDB:Database Password=derpassword";
+                con.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Param_in.DirDb + ";Jet OLEDB:Database Password=derpassword";
                 con.Open();
                 OleDbCommand cmd = new OleDbCommand();
                 cmd.Connection = con;
@@ -316,6 +331,29 @@ namespace Fttd
             }
             catch (Exception e) { MessageBox.Show("Проверьте правильность запроса." + e, "Ошибка"); }
             con.Close();
+        }
+    }
+    public class Tasken
+    {
+        public string Tasks { get; set; }
+        public string Project { get; set; }
+        public string Dir { get; set; }
+        public string Note { get; set; }
+        public bool Iscurrent { get; set; }
+        public DateTime Datein { get; set; }
+        public DateTime Dateout { get; set; }
+        public int Days { get; set; }
+
+        public Tasken(string tasks, string project, string dir, string note, bool iscurrent, DateTime datein, DateTime dateout)
+        {
+            Tasks = tasks;
+            Project = project;
+            Dir = dir;
+            Note = note;
+            Iscurrent = iscurrent;
+            Datein = datein;
+            Dateout = dateout;
+            Days = (Dateout - DateTime.Now).Days;
         }
     }
 }

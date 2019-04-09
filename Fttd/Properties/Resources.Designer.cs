@@ -63,9 +63,9 @@ namespace Fttd.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap ZAGRUZKA {
+        public static System.Drawing.Bitmap Loading {
             get {
-                object obj = ResourceManager.GetObject("ZAGRUZKA", resourceCulture);
+                object obj = ResourceManager.GetObject("Loading", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
