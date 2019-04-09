@@ -109,7 +109,7 @@ namespace Fttd
                 else
                 {
                     Rectangle rectangle = new Rectangle();
-                    rectangle.Width = tasks[i].Days * 40 - 6;
+                    rectangle.Width = (tasks[i].Days + 2) * 40 - 6;
                     rectangle.Height = 20;
                     rectangle.VerticalAlignment = VerticalAlignment.Center;
                     rectangle.HorizontalAlignment = HorizontalAlignment.Left;
@@ -129,7 +129,7 @@ namespace Fttd
                     daytask.Children.Add(tbRectangle);
                     Grid.SetRow(rectangle, i+1);
                     Grid.SetColumn(rectangle, 0);
-                    Grid.SetColumnSpan(rectangle, tasks[i].Days);
+                    Grid.SetColumnSpan(rectangle, tasks[i].Days + 2);
                     Grid.SetRow(tbRectangle, i+1);
                     Grid.SetColumn(tbRectangle, 0);
                     Grid.SetColumnSpan(tbRectangle, 13);
@@ -138,29 +138,18 @@ namespace Fttd
             return daytask;
 
         }
-    }
-    
-    public class Tasken
-    {
-        public string Tasks { get; set; }
-        public string Project { get; set; }
-        public string Dir { get; set; }
-        public string Note { get; set; }
-        public bool Iscurrent { get; set; }
-        public DateTime Datein { get; set; }
-        public DateTime Dateout { get; set; }
-        public int Days { get; set; }
 
-        public Tasken(string tasks, string project, string dir, string note, bool iscurrent, DateTime datein, DateTime dateout)
+        private void gridtop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            Tasks = tasks;
-            Project = project;
-            Dir = dir;
-            Note = note;
-            Iscurrent = iscurrent;
-            Datein = datein;
-            Dateout = dateout;
-            Days = (Dateout - DateTime.Now).Days;
+            try { this.DragMove(); }
+            catch { }
+        }
+
+        private void ButtonExit_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
+    
+    
 }
