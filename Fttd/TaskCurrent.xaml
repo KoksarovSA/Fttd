@@ -6,13 +6,16 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:Fttd"
         mc:Ignorable="d"
-        Title="Активные задания" Height="450" Width="800" ResizeMode="CanResizeWithGrip" Icon="folderdevelopment.ico" ShowInTaskbar="False" WindowStartupLocation="CenterScreen" AllowsTransparency="True" WindowStyle="None">
+        Title="Активные задания" Height="450" Width="800" ResizeMode="CanResizeWithGrip" Icon="folderdevelopment.ico" ShowInTaskbar="True" WindowStartupLocation="CenterScreen" AllowsTransparency="True" WindowStyle="None" IsTabStop="True">
     <Grid Background="Black">
         <Grid Name="gridtop" Background="#FF157599" MouseLeftButtonDown="gridtop_MouseLeftButtonDown" Margin="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
+            <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Left" Margin="10,0,0,0">
+                <TextBlock Text="Актуальные задания" VerticalAlignment="Center" FontSize="22" Foreground="White" FontWeight="Bold"/>
+            </StackPanel>
             <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" Margin="0,0,10,0">
                 <Button Name="ButtonExit" ToolTip="Выход" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonExit_Click">
                     <materialDesign:PackIcon Kind="Power" Width="30" Height="30"/>

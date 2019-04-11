@@ -62,10 +62,9 @@ namespace Fttd
             {
                 case "Задание":
                     {
-                        string[] vs = work.Dir_file_copy_in.Split('\\');
-                        string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
+
                         Dbaccess dbaccess = new Dbaccess();
-                        await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'"));                        
+                        await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));                        
                         break;
                     }
                 default:
@@ -80,10 +79,8 @@ namespace Fttd
                             {
                                 Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
                                 await Task.Run(() => File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in));
-                                string[] vs = work.Dir_file_copy_in.Split('\\');
-                                string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
                                 Dbaccess dbaccess = new Dbaccess();
-                                await Task.Run(() => dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'"));
+                                await Task.Run(() => dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
                             }
                         }
                         else
@@ -96,16 +93,21 @@ namespace Fttd
                             {
                                 Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
                                 await Task.Run(() => File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in));
-                                string[] vs = work.Dir_file_copy_in.Split('\\');
-                                string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
                                 Dbaccess dbaccess = new Dbaccess();
-                                await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'"));
+                                await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
                             }
                         }                      
                         break;
                     }
             }
             SelectedTreeViewItem();
+        }
+
+        public string DirInShortdir(string d)
+        {
+            string[] vs = d.Split('\\');
+            string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
+            return vs1;
         }
 
         /// <summary>
@@ -394,6 +396,7 @@ namespace Fttd
             ComboBoxTypeFiles.Text = "";
             TextBoxFiles.Clear();
             TextBoxNote.Clear();
+            TextBoxDirFile.Clear();
         }
 
         /// <summary>
@@ -542,13 +545,20 @@ namespace Fttd
                             string[] vs = dbaccess.Querydata[i];
                             string current = "Нет";
                             if (vs[2] == "True") { chTaskIsCurrent.IsChecked = true; current = "Да"; }
-                            DateTime dateTime1 = DateTime.Parse(vs[3]);
-                            DateTime dateTime2 = DateTime.Parse(vs[4]);
-                            x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\n" + "Выполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
+                            DateTime dateTime1 = new DateTime();
+                            DateTime dateTime2 = new DateTime();
+                            try
+                            {
+                                dateTime1 = DateTime.Parse(vs[3]);
+                                dateTime2 = DateTime.Parse(vs[4]);
+                                x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\n" + "Выполнить до: " + dateTime2.Date.ToString("dd.MM.yy");                                
+                                data1.SelectedDate = dateTime1;
+                                data2.SelectedDate = dateTime2;
+                            }
+                            catch { }
                             ComboBoxZad.Text = vs[0];
                             ComboBoxProekt.Text = vs[1];
-                            data1.SelectedDate = DateTime.Parse(vs[3]);
-                            data2.SelectedDate = DateTime.Parse(vs[4]);
+                            x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\n" + "Выполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
                         }
                         return x;
                     }
@@ -996,11 +1006,31 @@ namespace Fttd
                         else { MessageBox.Show("Ведите название приспособления", "Ошибка"); }
                         break;
                     case "Задания":
-                        if (ComboBoxZad.Text != "" && TextBoxDirFile.Text != "" && ComboBoxProekt.Text != "")
+                        if (ComboBoxZad.Text != "" && ComboBoxProekt.Text != "")
                         {
                             if (ComboBoxZad.Items.Contains(ComboBoxZad.Text))
                             {
-                                    MessageBox.Show("Укажите новое задание", "Ошибка"); 
+                                MessageBox.Show("Задание уже есть в базе, будет изменена только актуальность и добавлен файл", "Ошибка");
+                                if (TextBoxDirFile.Text != "")
+                                {
+                                    try
+                                    {
+                                        Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "Задание", new DirectoryInfo(TextBoxDirFile.Text).Name);
+                                        if (File.Exists(work.Dir_file_copy_in))
+                                        {
+                                            MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию", "Ошибка");
+                                        }
+                                        else
+                                        {
+                                            Directory.CreateDirectory(work.Dir_copy_in + "\\Задания");
+                                            File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                        }
+                                        dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True, [dir] = '" + DirInShortdir(work.Dir_file_copy_in) + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
+                                    }
+                                    catch { }
+                                }
+                                if (chTaskIsCurrent.IsChecked == true) { dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True WHERE [task] = '" + ComboBoxZad.Text + "'"); }
+                                else { dbaccess.DbRead("UPDATE [task] SET [iscurrent] = False WHERE [task] = '" + ComboBoxZad.Text + "'"); }
                             }
                             else
                             {
@@ -1009,14 +1039,14 @@ namespace Fttd
                                     Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "Задание", new DirectoryInfo(TextBoxDirFile.Text).Name);
                                     if (File.Exists(work.Dir_file_copy_in))
                                     {
-                                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
+                                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию", "Ошибка");
                                     }
                                     else
                                     {
                                         Directory.CreateDirectory(work.Dir_copy_in + "\\Задания");
                                         File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
                                     }
-                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + TextBoxDirFile.Text + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
+                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
                                 }
                                 catch (Exception ex){ MessageBox.Show(ex + "", "Ошибка"); }
                             }
@@ -1051,7 +1081,7 @@ namespace Fttd
                                         Directory.CreateDirectory(work.Dir_copy_in + "\\Графики");
                                         File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
                                     }
-                                    dbaccess.Dbinsert("graphics", "[namegrap], [project], [dir]", "'" + ComboBoxName.Text + "', '" + ComboBoxProekt.Text + "', '" + TextBoxDirFile.Text + "'");
+                                    dbaccess.Dbinsert("graphics", "[namegrap], [project], [dir]", "'" + ComboBoxName.Text + "', '" + ComboBoxProekt.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "'");
                                 }
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
@@ -1079,7 +1109,7 @@ namespace Fttd
                                         Directory.CreateDirectory(work.Dir_copy_in + "\\Служебные");
                                         File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
                                     }
-                                    dbaccess.Dbinsert("service", "[nameserv], [note], [dir]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + TextBoxDirFile.Text + "'");
+                                    dbaccess.Dbinsert("service", "[nameserv], [note], [dir]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "'");
                                 }
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }

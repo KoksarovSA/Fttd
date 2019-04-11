@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,12 +37,10 @@ namespace Fttd
             }
             gr.Children.Add(CreateGrid(60, zad));
         }
-
        
-
         public Grid CreateGrid(int col, List<Tasken> tasks)
         {
-            Grid daytask = new Grid() { ShowGridLines = false};
+            Grid daytask = new Grid() { ShowGridLines = false };
             for (int i = 0; i < col; ++i)
             {
                 daytask.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(40) });
@@ -82,7 +81,7 @@ namespace Fttd
                 if (tasks[i].Dateout < DateTime.Now || tasks[i].Days <= 0)
                 {
                     Rectangle rectangle = new Rectangle();
-                    rectangle.Width = 520 - 6;
+                    rectangle.Width = 80 - 6;
                     rectangle.Height = 20;
                     rectangle.VerticalAlignment = VerticalAlignment.Center;
                     rectangle.HorizontalAlignment = HorizontalAlignment.Left;
@@ -96,15 +95,22 @@ namespace Fttd
                     tbRectangle.VerticalAlignment = VerticalAlignment.Center;
                     tbRectangle.HorizontalAlignment = HorizontalAlignment.Left;
                     tbRectangle.Foreground = (Brush)bc.ConvertFrom("#FFFFFFFF");
-                    tbRectangle.Text = "     " + tasks[i].Tasks + "  Проект: " + tasks[i].Project + "  Дата выдачи: " + tasks[i].Datein.ToString("dd.MM.yy") + "  Выполнить до: " + tasks[i].Dateout.ToString("dd.MM.yy");
+                    tbRectangle.Text = "   " + tasks[i].Tasks;
+                    tbRectangle.AddHandler(TextBlock.MouseLeftButtonUpEvent, new RoutedEventHandler(Element_Click));
+                    tbRectangle.AddHandler(TextBlock.MouseRightButtonUpEvent, new RoutedEventHandler(Element_MouseRightClick));
+                    ToolTip tool = new ToolTip();
+                    ToolTipService.SetShowDuration(rectangle, 60000);
+                    ToolTipService.SetPlacement(rectangle, System.Windows.Controls.Primitives.PlacementMode.Mouse);                    
+                    tool.Content = "Задание: " + tasks[i].Tasks + "\nПроект: " + tasks[i].Project + "\nДата выдачи: " + tasks[i].Datein.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].Dateout.ToString("dd.MM.yy") + "\nПрошло " + Math.Abs(tasks[i].Days).ToString() + " " + DeyOverDeys(tasks[i].Days) + " после\nокончания срока ";                   
+                    rectangle.ToolTip = tool;
                     daytask.Children.Add(rectangle);
                     daytask.Children.Add(tbRectangle);
                     Grid.SetRow(rectangle, i+1);
                     Grid.SetColumn(rectangle, 0);
-                    Grid.SetColumnSpan(rectangle, 13);
+                    Grid.SetColumnSpan(rectangle, 2);
                     Grid.SetRow(tbRectangle, i+1);
                     Grid.SetColumn(tbRectangle, 0);
-                    Grid.SetColumnSpan(tbRectangle, 13);
+                    Grid.SetColumnSpan(tbRectangle, 2);
                 }
                 else
                 {
@@ -124,7 +130,14 @@ namespace Fttd
                     tbRectangle.VerticalAlignment = VerticalAlignment.Center;
                     tbRectangle.HorizontalAlignment = HorizontalAlignment.Left;
                     tbRectangle.Foreground = (Brush)bc.ConvertFrom("#FFFFFFFF");
-                    tbRectangle.Text = "     " + tasks[i].Tasks + "  Проект: " + tasks[i].Project + "  Дата выдачи: " + tasks[i].Datein.ToString("dd.MM.yy") + "  Выполнить до: " + tasks[i].Dateout.ToString("dd.MM.yy");
+                    tbRectangle.Text = "   " + tasks[i].Tasks;
+                    tbRectangle.AddHandler(TextBlock.MouseLeftButtonUpEvent, new RoutedEventHandler(Element_Click));
+                    tbRectangle.AddHandler(TextBlock.MouseRightButtonUpEvent, new RoutedEventHandler(Element_MouseRightClick));
+                    ToolTip tool = new ToolTip();
+                    ToolTipService.SetShowDuration(rectangle, 60000);
+                    ToolTipService.SetPlacement(rectangle, System.Windows.Controls.Primitives.PlacementMode.Mouse);
+                    tool.Content = "Задание: " + tasks[i].Tasks + "\nПроект: " + tasks[i].Project + "\nДата выдачи: " + tasks[i].Datein.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].Dateout.ToString("dd.MM.yy") + "\nОсталось " + (tasks[i].Days + 2).ToString() + " " + DeyOverDeys(tasks[i].Days + 2);
+                    rectangle.ToolTip = tool;
                     daytask.Children.Add(rectangle);
                     daytask.Children.Add(tbRectangle);
                     Grid.SetRow(rectangle, i+1);
@@ -136,7 +149,43 @@ namespace Fttd
                 }
             }
             return daytask;
+        }
 
+        private void Element_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Dbaccess dbaccess = new Dbaccess();
+                dbaccess.Dbselect("SELECT [dir], [task] FROM [task] WHERE [task] = '" + (sender as TextBlock).Text.Trim() + "'");
+                for (int j = 0; j < dbaccess.Querydata.Count; ++j)
+                {
+                    string[] vs = dbaccess.Querydata[j];
+                    Process.Start(@"" + Param_in.DirFiles + "\\" + vs[0] + "");
+                }
+            }
+            catch { MessageBox.Show("Файл не привязан к заданию", "Ошибка"); }
+        }
+
+        private void Element_MouseRightClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Dbaccess dbaccess = new Dbaccess();
+                BrushConverter bc = new BrushConverter();
+                Brush brRed = (Brush)bc.ConvertFrom("#FFAE1010");
+                Brush brWhite = (Brush)bc.ConvertFrom("#FFFFFFFF");
+                if ((sender as TextBlock).Foreground.ToString() != "#FFAE1010")
+                {
+                    (sender as TextBlock).Foreground = brRed;
+                    dbaccess.DbRead("UPDATE [task] SET [iscurrent] = False WHERE [task] = '" + (sender as TextBlock).Text.Trim() + "'");
+                }
+                else
+                {
+                    (sender as TextBlock).Foreground = brWhite;
+                    dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True WHERE [task] = '" + (sender as TextBlock).Text.Trim() + "'");
+                }
+            }
+            catch { }            
         }
 
         private void gridtop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -149,7 +198,21 @@ namespace Fttd
         {
             this.Close();
         }
-    }
-    
-    
+
+        public string DeyOverDeys(int day)
+        {
+            string x = "дней";
+            string a = day.ToString();
+            char[] b = a.ToCharArray();
+            switch (b[b.Length - 1])
+            {
+                case '1': x = "день"; break;
+                case '2': x = "дня"; break;
+                case '3': x = "дня"; break;
+                case '4': x = "дня"; break;
+                default: break;
+            }
+            return x;
+        }
+    }       
 }

@@ -43,10 +43,13 @@
                         <CheckBox Name="CheckBoxTreeViewSet" Style="{StaticResource MaterialDesignSwitchToggleButton}" Margin="10,0,0,0" Checked="CheckBoxTreeViewSet_Checked" Unchecked="CheckBoxTreeViewSet_Unchecked" Click="CheckBoxTreeViewSet_Click" />
                         <TextBlock Text="Отображение по проектам" Foreground="White" Margin="15,5,0,0"/>
                     </StackPanel>
-                    <Button Name="CurrentTask" HorizontalAlignment="Left" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" ToolTip="Активные задания" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="CurrentTask_Click">
-                        <materialDesign:PackIcon Kind="CalendarTask" Width="30" Height="30"/>
-                    </Button>
-                    <TextBlock Text="FTTD v.1.1.1" Foreground="White" Margin="15,5,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Name="CurrentTask" HorizontalAlignment="Left" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" ToolTip="Актуальные задания" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="CurrentTask_Click" Margin="10,0,0,0">
+                            <materialDesign:PackIcon Kind="CalendarTask" Width="30" Height="30"/>
+                        </Button>
+                        <TextBlock Text="Актуальные задания" Foreground="White" Margin="20,5,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="FTTD v.1.1.3" Foreground="White" Margin="15,5,0,0"/>
                 </StackPanel>
             </Grid>
             <Grid Name="grid0" Grid.Column="0" Background="#FF157599">
