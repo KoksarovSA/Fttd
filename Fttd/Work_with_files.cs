@@ -10,7 +10,6 @@ namespace Fttd
     {
         private string dir_file_copy_out;
         private string dir_file_copy_in;
-        private string dir_copy_in;
         private string file;
 
         public string Dir_file_copy_out
@@ -23,13 +22,7 @@ namespace Fttd
         {
             get { return dir_file_copy_in; }
             set { dir_file_copy_in = value; }
-        }
-
-        public string Dir_copy_in
-        {
-            get { return dir_copy_in; }
-            set { dir_copy_in = value; }
-        }
+        }       
 
         public string File
         {
@@ -45,16 +38,15 @@ namespace Fttd
         /// <param name="name">Имя детали</param>
         public Work_with_files(string dirout, string index, string name, string file_type, string newfilename)
         {
-
-            Dir_copy_in = @"" + Param_in.DirFiles + "";
             Dir_file_copy_out = dirout;
             file = newfilename;
             switch (file_type)
             {
-                case "Задание": Dir_file_copy_in = Dir_copy_in + "\\Задания\\" + File; break;
-                case "График": Dir_file_copy_in = Dir_copy_in + "\\Графики\\" + File; break;
-                case "Служебная": Dir_file_copy_in = Dir_copy_in + "\\Служебные\\" + File; break;
-                default: Dir_file_copy_in = Dir_copy_in + "\\" + name + "_" + index + "\\" + File; break;
+                case "Задание": Dir_file_copy_in = @"" + Param_in.DirFiles + "\\Задания\\" + File; break;
+                case "График": Dir_file_copy_in = @"" + Param_in.DirFiles + "\\Графики\\" + File; break;
+                case "Служебная": Dir_file_copy_in = @"" + Param_in.DirFiles + "\\Служебные\\" + File; break;
+                case "Приспособления": Dir_file_copy_in = @"" + Param_in.DirFiles + "\\Приспособления\\" + index + "\\" + File; break;
+                default: Dir_file_copy_in = @"" + Param_in.DirFiles + "\\" + name + "_" + index + "\\" + File; break;
             }
         }
     }
@@ -89,7 +81,7 @@ namespace Fttd
         /// Метод для получения последнего числа бэкапа
         /// </summary>
         /// <returns>Возвращает число месяца последнего бэкапа</returns>
-        public string GetFTTDBackup()
+        public static string GetFTTDBackup()
         {
             string day = ConfigurationManager.AppSettings.Get("FTTDBackup");
             return day;
@@ -99,7 +91,7 @@ namespace Fttd
         /// Метод записи последнего числа бэкапа
         /// </summary>
         /// <param name="txt_dir">Число месяца последнего бэкапа</param>
-        public void SetFTTDBackup(string day)
+        public static void SetFTTDBackup(string day)
         {
             var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 

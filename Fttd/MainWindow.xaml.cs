@@ -38,12 +38,11 @@ namespace Fttd
         /// </summary>
         public void BackupFTTDDB()
         {
-            Param_in param = new Param_in();
-            if (Math.Abs(DateTime.Now.Day - Convert.ToInt32(param.GetFTTDBackup())) > 6)
+            if (Math.Abs(DateTime.Now.Day - Convert.ToInt32(Param_in.GetFTTDBackup())) > 6)
             {
                 Directory.CreateDirectory(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup");
                 if(!File.Exists(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name)) File.Copy(Param_in.DirDb, Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name);
-                param.SetFTTDBackup(Convert.ToString(DateTime.Now.Day));
+                Param_in.SetFTTDBackup(Convert.ToString(DateTime.Now.Day));
             }
         }
 
@@ -57,12 +56,11 @@ namespace Fttd
         /// <param name="note">Примечание</param>
         public async void CopyFile(string dirout, string index, string name, string newfilename, string file_type = "None", string note = "None")
         {
-            Work_with_files work = new Work_with_files(dirout, index, name, file_type, newfilename);
+            Work_with_files work = new Work_with_files(dirout, index, name, TextBlock_type.Text, newfilename);
             switch (file_type)
             {
                 case "Задание":
                     {
-
                         Dbaccess dbaccess = new Dbaccess();
                         await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));                        
                         break;
@@ -77,7 +75,7 @@ namespace Fttd
                             }
                             else
                             {
-                                Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
+                                Directory.CreateDirectory(Param_in.DirFiles + "\\Приспособления\\" + index + "");
                                 await Task.Run(() => File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in));
                                 Dbaccess dbaccess = new Dbaccess();
                                 await Task.Run(() => dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
@@ -91,7 +89,7 @@ namespace Fttd
                             }
                             else
                             {
-                                Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
+                                Directory.CreateDirectory(Param_in.DirFiles + "\\" + name + "_" + index + "");
                                 await Task.Run(() => File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in));
                                 Dbaccess dbaccess = new Dbaccess();
                                 await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
@@ -1022,7 +1020,7 @@ namespace Fttd
                                         }
                                         else
                                         {
-                                            Directory.CreateDirectory(work.Dir_copy_in + "\\Задания");
+                                            Directory.CreateDirectory(Param_in.DirFiles + "\\Задания");
                                             File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
                                         }
                                         dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True, [dir] = '" + DirInShortdir(work.Dir_file_copy_in) + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
@@ -1043,7 +1041,7 @@ namespace Fttd
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(work.Dir_copy_in + "\\Задания");
+                                        Directory.CreateDirectory(Param_in.DirFiles + "\\Задания");
                                         File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
                                     }
                                     dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
@@ -1078,7 +1076,7 @@ namespace Fttd
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(work.Dir_copy_in + "\\Графики");
+                                        Directory.CreateDirectory(Param_in.DirFiles + "\\Графики");
                                         File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
                                     }
                                     dbaccess.Dbinsert("graphics", "[namegrap], [project], [dir]", "'" + ComboBoxName.Text + "', '" + ComboBoxProekt.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "'");
@@ -1106,7 +1104,7 @@ namespace Fttd
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(work.Dir_copy_in + "\\Служебные");
+                                        Directory.CreateDirectory(Param_in.DirFiles + "\\Служебные");
                                         File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
                                     }
                                     dbaccess.Dbinsert("service", "[nameserv], [note], [dir]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "'");
@@ -1369,7 +1367,7 @@ namespace Fttd
                         try
                         {
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + "\\" + TextBoxFiles.Text + "");
+                            Process.Start(@"" + Param_in.DirFiles + "\\Приспособления\\" + TextBoxFiles.Text + "");
                         }
                         catch { }
                         break;
@@ -1380,8 +1378,6 @@ namespace Fttd
                             Process.Start(@"" + Param_in.DirFiles + "\\Задания\\" + textDataGrid + "");
                         }
                         catch { }
-                        break;
-                    case "Проекты":
                         break;
                     case "Графики":
                         try
