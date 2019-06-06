@@ -20,17 +20,19 @@ namespace Fttd
         public MainWindow()
         {
             InitializeComponent();
-            if (ConfigurationManager.AppSettings.Get("CheckBoxTreeViewSet") == "true") { CheckBoxTreeViewSet.IsChecked=true; }
+            if (ConfigurationManager.AppSettings.Get("CheckBoxTreeViewSet") == "true") { CheckBoxTreeViewSet.IsChecked = true; }
             try
             {
                 Param_in.GetDirDB();
                 Param_in.GetDirFiles();
+                State.stateTreeView = true;
+                State.UpdateDataTreeView();
                 TreeviewSet();
                 TextBoxBD.Text = Param_in.DirDb;
                 TextBoxDir.Text = Param_in.DirFiles;
                 BackupFTTDDB();
             }
-            catch (Exception e){ MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
+            catch (Exception e) { MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
         }
 
         /// <summary>
@@ -41,7 +43,7 @@ namespace Fttd
             if (Math.Abs(DateTime.Now.Day - Convert.ToInt32(Param_in.GetFTTDBackup())) > 6)
             {
                 Directory.CreateDirectory(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup");
-                if(!File.Exists(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name)) File.Copy(Param_in.DirDb, Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name);
+                if (!File.Exists(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name)) File.Copy(Param_in.DirDb, Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name);
                 Param_in.SetFTTDBackup(Convert.ToString(DateTime.Now.Day));
             }
         }
@@ -62,7 +64,7 @@ namespace Fttd
                 case "Задание":
                     {
                         Dbaccess dbaccess = new Dbaccess();
-                        await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));                        
+                        await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
                         break;
                     }
                 default:
@@ -94,7 +96,7 @@ namespace Fttd
                                 Dbaccess dbaccess = new Dbaccess();
                                 await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
                             }
-                        }                      
+                        }
                         break;
                     }
             }
@@ -114,253 +116,217 @@ namespace Fttd
         public void TreeviewSet()
         {
             TreeViewDet.Items.Clear();
-            Dbaccess dbaccess = new Dbaccess();
-            switch(TextBlock_type.Text)
+            if (State.stateTreeView) { State.UpdateDataTreeView(); }
+            switch (TextBlock_type.Text)
             {
                 case "Детали":
                     if (CheckBoxTreeViewSet.IsChecked == false)
                     {
-                        dbaccess.Dbselect("SELECT [detail_index], [detail_name] FROM [detail_db] ORDER BY [detail_name]");
                         ComboBoxIndex.Items.Clear();
                         ComboBoxName.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.detailColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
                             TextBlock IT2 = new TextBlock();
-                            IT2.Text = vs[1] + '|' + vs[0];
+                            IT2.Text = DetailList.detailColl[i].DetailName + '|' + DetailList.detailColl[i].Index;
                             TreeViewDet.Items.Add(IT2);
-                            ComboBoxIndex.Items.Add(vs[0]);
-                            ComboBoxName.Items.Add(vs[1]);
+                            ComboBoxIndex.Items.Add(DetailList.detailColl[i].Index);
+                            ComboBoxName.Items.Add(DetailList.detailColl[i].DetailName);
                         }
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                         ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.projectColl.Count; i++)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
+                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
                         }
-                        dbaccess.Dbselect("SELECT [task] FROM [task] ORDER BY [task]");
                         ComboBoxZad.Items.Clear();
                         ComboBoxTask.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.taskColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxZad.Items.Add(vs[0]);
-                            ComboBoxTask.Items.Add(vs[0]);
-
+                            ComboBoxZad.Items.Add(DetailList.taskColl[i].TaskName);
+                            ComboBoxTask.Items.Add(DetailList.taskColl[i].TaskName);
                         }
-                        dbaccess.Dbselect("SELECT DISTINCT [razrabotal] FROM [detail_db] ORDER BY [razrabotal]");
                         ComboBoxRazrab.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.developerColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxRazrab.Items.Add(vs[0]);
+                            ComboBoxRazrab.Items.Add(DetailList.developerColl[i].DeveloperName);
                         }
-                        dbaccess.Dbselect("SELECT DISTINCT [inventory] FROM [detail_db] ORDER BY [inventory] DESC");
                         ComboBoxNPU.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.inventoryColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxNPU.Items.Add(vs[0]);
+                            ComboBoxNPU.Items.Add(DetailList.inventoryColl[i].InventoryNom);
                         }
                     }
                     else if (CheckBoxTreeViewSet.IsChecked == true)
                     {
-                        dbaccess.Dbselect("SELECT DISTINCT [project] FROM [project] ORDER BY [project]");
+
                         ComboBoxProekt.Items.Clear();
                         ComboBoxIndex.Items.Clear();
                         ComboBoxName.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        Dbaccess dbaccess2 = new Dbaccess();
+                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
+                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
                             TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = vs[0];
+                            ITProekt.Header = DetailList.projectColl[i].ProjectName;
                             TreeViewDet.Items.Add(ITProekt);
-                            Dbaccess dbaccess2 = new Dbaccess();
-                            dbaccess2.Dbselect("SELECT [detail_index], [detail_name], [project] FROM [detail_db] WHERE [project] = '" + vs[0] + "' ORDER BY [detail_name]");
-                            for (int j = 0; j < dbaccess2.Querydata.Count; ++j)
+                            for (int j = 0; j < DetailList.detailColl.Count; ++j)
                             {
-                                string[] vs2 = dbaccess2.Querydata[j];
-                                TextBlock ITDet = new TextBlock();
-                                ITDet.Text = vs2[1] + '|' + vs2[0];
-                                ITProekt.Items.Add(ITDet);
-                                ComboBoxIndex.Items.Add(vs2[0]);
-                                ComboBoxName.Items.Add(vs2[1]);
+                                if (DetailList.detailColl[j].Project == DetailList.projectColl[i].ProjectName)
+                                {
+                                    TextBlock ITDet = new TextBlock();
+                                    ITDet.Text = DetailList.detailColl[j].DetailName + '|' + DetailList.detailColl[j].Index;
+                                    ITProekt.Items.Add(ITDet);
+                                    ComboBoxIndex.Items.Add(DetailList.detailColl[j].Index);
+                                    ComboBoxName.Items.Add(DetailList.detailColl[j].DetailName);
+                                }
                             }
                         }
-                        dbaccess.Dbselect("SELECT [task] FROM [task] ORDER BY [task]");
                         ComboBoxZad.Items.Clear();
                         ComboBoxTask.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.taskColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxZad.Items.Add(vs[0]);
-                            ComboBoxTask.Items.Add(vs[0]);
+                            ComboBoxZad.Items.Add(DetailList.taskColl[i].TaskName);
+                            ComboBoxTask.Items.Add(DetailList.taskColl[i].TaskName);
                         }
-                        dbaccess.Dbselect("SELECT DISTINCT [razrabotal] FROM [detail_db] ORDER BY [razrabotal]");
                         ComboBoxRazrab.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.developerColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxRazrab.Items.Add(vs[0]);
+                            ComboBoxRazrab.Items.Add(DetailList.developerColl[i].DeveloperName);
                         }
-                        dbaccess.Dbselect("SELECT DISTINCT [inventory] FROM [detail_db] ORDER BY [inventory] DESC");
                         ComboBoxNPU.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.inventoryColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxNPU.Items.Add(vs[0]);
+                            ComboBoxNPU.Items.Add(DetailList.inventoryColl[i].InventoryNom);
                         }
                     }
                     break;
                 case "Приспособления":
-                    dbaccess.Dbselect("SELECT [indexdev] FROM [device] ORDER BY [indexdev]");
                     ComboBoxIndex.Items.Clear();
                     ComboBoxName.Items.Clear();
-                    for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                    for (int i = 0; i < DetailList.deviceColl.Count; ++i)
                     {
-                            string[] vs = dbaccess.Querydata[i];
-                            TextBlock IT2 = new TextBlock();
-                            IT2.Text = vs[0];
-                            TreeViewDet.Items.Add(IT2);
-                            ComboBoxIndex.Items.Add(vs[0]);
+                        TextBlock IT2 = new TextBlock();
+                        IT2.Text = DetailList.deviceColl[i].DeviceIndex;
+                        TreeViewDet.Items.Add(IT2);
+                        ComboBoxIndex.Items.Add(DetailList.deviceColl[i].DeviceIndex);
                     }
-                    dbaccess.Dbselect("SELECT DISTINCT [razrabotal] FROM [detail_db] ORDER BY [razrabotal]");
                     ComboBoxRazrab.Items.Clear();
-                    for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                    for (int i = 0; i < DetailList.developerColl.Count; ++i)
                     {
-                        string[] vs = dbaccess.Querydata[i];
-                        ComboBoxRazrab.Items.Add(vs[0]);
+                        ComboBoxRazrab.Items.Add(DetailList.developerColl[i].DeveloperName);
                     }
                     break;
                 case "Задания":
                     if (CheckBoxTreeViewSet.IsChecked == false)
                     {
-                        dbaccess.Dbselect("SELECT [task] FROM [task] ORDER BY [task]");
                         ComboBoxZad.Items.Clear();
                         ComboBoxTask.Items.Clear();
                         data1.Text = "";
                         data2.Text = "";
                         chTaskIsCurrent.IsChecked = false;
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.taskColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
                             TextBlock IT2 = new TextBlock();
-                            IT2.Text = vs[0];
+                            IT2.Text = DetailList.taskColl[i].TaskName;
                             TreeViewDet.Items.Add(IT2);
-                            ComboBoxZad.Items.Add(vs[0]);
-                            ComboBoxTask.Items.Add(vs[0]);
+                            ComboBoxZad.Items.Add(DetailList.taskColl[i].TaskName);
+                            ComboBoxTask.Items.Add(DetailList.taskColl[i].TaskName);
 
                         }
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                         ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
+                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
                         }
                     }
                     else if (CheckBoxTreeViewSet.IsChecked == true)
                     {
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                         ComboBoxProekt.Items.Clear();
                         data1.Text = "";
                         data2.Text = "";
                         chTaskIsCurrent.IsChecked = false;
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
+                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
                             TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = vs[0];
+                            ITProekt.Header = DetailList.projectColl[i].ProjectName;
                             TreeViewDet.Items.Add(ITProekt);
-                            Dbaccess dbaccess2 = new Dbaccess();
-                            dbaccess2.Dbselect("SELECT [task], [project] FROM [task] WHERE [project] = '" + vs[0] + "' ORDER BY [task]");
-                            for (int j = 0; j < dbaccess2.Querydata.Count; ++j)
+                            for (int j = 0; j < DetailList.taskColl.Count; ++j)
                             {
-                                string[] vs2 = dbaccess2.Querydata[j];
-                                TextBlock ITDet = new TextBlock();
-                                ITDet.Text = vs2[0];
-                                ITProekt.Items.Add(ITDet);
-                                ComboBoxZad.Items.Add(vs2[0]);
-                                ComboBoxTask.Items.Add(vs2[0]);
+                                if (DetailList.taskColl[j].ProjectTaskName == DetailList.projectColl[i].ProjectName)
+                                {
+                                    TextBlock ITDet = new TextBlock();
+                                    ITDet.Text = DetailList.taskColl[j].TaskName;
+                                    ITProekt.Items.Add(ITDet);
+                                    ComboBoxZad.Items.Add(DetailList.taskColl[j].TaskName);
+                                    ComboBoxTask.Items.Add(DetailList.taskColl[j].TaskName);
+                                }
                             }
                         }
                     }
                     break;
                 case "Проекты":
-                    dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                     ComboBoxProekt.Items.Clear();
-                    for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                    for (int i = 0; i < DetailList.projectColl.Count; ++i)
                     {
-                        string[] vs = dbaccess.Querydata[i];
                         TextBlock IT2 = new TextBlock();
-                        IT2.Text = vs[0];
+                        IT2.Text = DetailList.projectColl[i].ProjectName;
                         TreeViewDet.Items.Add(IT2);
-                        ComboBoxProekt.Items.Add(vs[0]);
+                        ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
                     }
                     break;
                 case "Графики":
                     if (CheckBoxTreeViewSet.IsChecked == false)
                     {
-                        dbaccess.Dbselect("SELECT [namegrap] FROM [graphics] ORDER BY [namegrap]");
                         ComboBoxName.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.graphicsColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
                             TextBlock IT2 = new TextBlock();
-                            IT2.Text = vs[0];
+                            IT2.Text = DetailList.graphicsColl[i].NameGrap;
                             TreeViewDet.Items.Add(IT2);
-                            ComboBoxName.Items.Add(vs[0]);
+                            ComboBoxName.Items.Add(DetailList.graphicsColl[i].NameGrap);
                         }
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                         ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
+                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
                         }
                     }
                     else if (CheckBoxTreeViewSet.IsChecked == true)
                     {
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                         ComboBoxProekt.Items.Clear();
                         ComboBoxName.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
+                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
                             TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = vs[0];
+                            ITProekt.Header = DetailList.projectColl[i].ProjectName;
                             TreeViewDet.Items.Add(ITProekt);
-                            Dbaccess dbaccess2 = new Dbaccess();
-                            dbaccess2.Dbselect("SELECT [namegrap], [project] FROM [graphics] WHERE [project] = '" + vs[0] + "' ORDER BY [namegrap]");                            
-                            for (int j = 0; j < dbaccess2.Querydata.Count; ++j)
+                            for (int j = 0; j < DetailList.graphicsColl.Count; ++j)
                             {
-                                string[] vs2 = dbaccess2.Querydata[j];
-                                TextBlock ITDet = new TextBlock();
-                                ITDet.Text = vs2[0];
-                                ITProekt.Items.Add(ITDet);
-                                ComboBoxName.Items.Add(vs2[0]);
+                                if (DetailList.graphicsColl[j].ProjectGrap == DetailList.projectColl[i].ProjectName)
+                                {
+                                    TextBlock ITDet = new TextBlock();
+                                    ITDet.Text = DetailList.graphicsColl[j].NameGrap;
+                                    ITProekt.Items.Add(ITDet);
+                                    ComboBoxName.Items.Add(DetailList.graphicsColl[j].NameGrap);
+                                }
                             }
                         }
                     }
                     break;
                 case "Служебные":
-                    dbaccess.Dbselect("SELECT [nameserv] FROM [service] ORDER BY [nameserv]");
+
                     ComboBoxIndex.Items.Clear();
                     ComboBoxName.Items.Clear();
-                    for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                    for (int i = 0; i < DetailList.servicesColl.Count; ++i)
                     {
-                        string[] vs = dbaccess.Querydata[i];
                         TextBlock IT2 = new TextBlock();
-                        IT2.Text = vs[0];
+                        IT2.Text = DetailList.servicesColl[i].NameServ;
                         TreeViewDet.Items.Add(IT2);
-                        ComboBoxIndex.Items.Add(vs[0]);
+                        ComboBoxIndex.Items.Add(DetailList.servicesColl[i].NameServ);
                     }
                     break;
-                default:break;
+                default: break;
             }
         }
 
@@ -368,7 +334,7 @@ namespace Fttd
         /// Метод для действия при выделении TreeViewDetItem 
         /// </summary>
         public void SelectedTreeViewItem()
-        {           
+        {
             try
             {
                 data1.Text = "";
@@ -386,7 +352,7 @@ namespace Fttd
                         TextBlockPD.Text = GetNoteDetail(textItem);
                         if (textItem != "") SetDataGrid(textItem);
                         break;
-                }         
+                }
             }
             catch { TextBlockPD.Text = ""; TextBlockPF.Text = ""; }
             TextBlockPF.Text = "";
@@ -409,7 +375,7 @@ namespace Fttd
             {
                 case "Детали":
                     try
-                    {                        
+                    {
                         dbaccess.Dbselect("SELECT [detail_index], [file_name], [file_type] FROM [stack_files] WHERE [detail_index] = '" + index + "'");
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
@@ -417,11 +383,11 @@ namespace Fttd
                             coll.Add(new Table() { Name = vs[1], Type = vs[2] });
                         }
                     }
-                    catch { }                  
+                    catch { }
                     break;
                 case "Приспособления":
                     try
-                    {                      
+                    {
                         dbaccess.Dbselect("SELECT [indexdev], [file_name], [file_type] FROM [device_files] WHERE [indexdev] = '" + index + "'");
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
@@ -515,7 +481,7 @@ namespace Fttd
                     catch
                     {
                         return x;
-                    }                   
+                    }
                 case "Приспособления":
                     try
                     {
@@ -526,7 +492,7 @@ namespace Fttd
                             x = "Приспособление: " + vs[1] + "\n" + "Индекс: " + vs[0] + "\n" + "Разработал: " + vs[2] + "\n" + "Дата добавления: " + vs[3];
                             ComboBoxIndex.Text = vs[0];
                             ComboBoxName.Text = vs[1];
-                            ComboBoxRazrab.Text = vs[3];
+                            ComboBoxRazrab.Text = vs[2];
                         }
                         return x;
                     }
@@ -549,7 +515,7 @@ namespace Fttd
                             {
                                 dateTime1 = DateTime.Parse(vs[3]);
                                 dateTime2 = DateTime.Parse(vs[4]);
-                                x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\n" + "Выполнить до: " + dateTime2.Date.ToString("dd.MM.yy");                                
+                                x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\n" + "Выполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
                                 data1.SelectedDate = dateTime1;
                                 data2.SelectedDate = dateTime2;
                             }
@@ -632,7 +598,7 @@ namespace Fttd
                         }
                         return x;
                     }
-                    catch {return x; } 
+                    catch { return x; }
                 case "Приспособления":
                     try
                     {
@@ -666,7 +632,7 @@ namespace Fttd
                     catch { return x; }
                 case "Проекты":
                     string y = "";
-                    return y; 
+                    return y;
                 case "Графики":
                     try
                     {
@@ -726,7 +692,7 @@ namespace Fttd
                 default: break;
             }
         }
-        
+
         // Кнопка в настройках добавления файла базы данных
         private void ButtonAddDB_Click(object sender, RoutedEventArgs e)
         {
@@ -837,7 +803,7 @@ namespace Fttd
                 ComboBoxNPU.IsEnabled = false;
                 TextBoxDirFile.IsEnabled = true;
                 ButtonAddFile.IsEnabled = true;
-            }            
+            }
         }
 
         // Кнопка открытия меню удаления детали
@@ -885,7 +851,7 @@ namespace Fttd
                 ComboBoxRazrab.IsEnabled = false;
                 TextBoxDirFile.IsEnabled = false;
                 ButtonAddFile.IsEnabled = false;
-            }         
+            }
         }
 
         // Кнопка открытия меню добавления файла
@@ -1046,10 +1012,10 @@ namespace Fttd
                                     }
                                     dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
                                 }
-                                catch (Exception ex){ MessageBox.Show(ex + "", "Ошибка"); }
+                                catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
                         }
-                        else { MessageBox.Show("Ведите номер задания, выберите проект и укажите файл","Ошибка"); }
+                        else { MessageBox.Show("Ведите номер задания, выберите проект и укажите файл", "Ошибка"); }
                         break;
                     case "Проекты":
                         if (ComboBoxProekt.Text != "")
@@ -1116,9 +1082,10 @@ namespace Fttd
                         break;
                     default: break;
                 }
+                State.stateTreeView = true;
                 TreeviewSet();
             }
-            catch(Exception ex) { MessageBox.Show(ex +"", "Ошибка"); }
+            catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
         }
 
         // Кнопка изменения детали
@@ -1138,7 +1105,7 @@ namespace Fttd
                         break;
                     case "Приспособления":
                         if (ComboBoxIndex.Text != "")
-                        {                      
+                        {
                             dbaccess.DbRead("UPDATE [device] SET [namedev] = '" + ComboBoxName.Text + "', [razrabotal] = '" + ComboBoxRazrab.Text + "' WHERE [indexdev] = '" + ComboBoxIndex.Text + "'");
                         }
                         else { MessageBox.Show("Ведите название приспособления", "Ошибка"); }
@@ -1159,6 +1126,7 @@ namespace Fttd
                         break;
                     default: break;
                 }
+                State.stateTreeView = true;
                 TreeviewSet();
             }
             catch { }
@@ -1175,7 +1143,7 @@ namespace Fttd
                     case "Детали":
                         if (ComboBoxIndex.Text != "")
                         {
-                            dbaccess.DbRead("DELETE FROM [detail_db] WHERE [detail_index] = '" + ComboBoxIndex.Text + "' AND [inventory] = '" + ComboBoxNPU.Text + "'");
+                            dbaccess.DbRead("DELETE FROM [detail_db] WHERE [detail_index] = '" + ComboBoxIndex.Text + "' AND [inventory] = " + ComboBoxNPU.Text + "");
                         }
                         else { MessageBox.Show("Выберите деталь", "Ошибка"); }
                         break;
@@ -1195,13 +1163,14 @@ namespace Fttd
                         break;
                     case "Служебные":
                         if (ComboBoxIndex.Text != "")
-                        {                            
-                            dbaccess.DbRead("DELETE FROM [service] WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");                           
+                        {
+                            dbaccess.DbRead("DELETE FROM [service] WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
                         }
                         else { MessageBox.Show("Выберите служебную", "Ошибка"); }
                         break;
                     default: break;
                 }
+                State.stateTreeView = true;
                 TreeviewSet();
             }
             catch { }
@@ -1213,7 +1182,7 @@ namespace Fttd
             OpenFileDialog openFile = new OpenFileDialog();
             openFile.ShowDialog();
             string dir = openFile.FileName;
-            if (dir !="")
+            if (dir != "")
             {
                 TextBoxFiles.Text = dir;
                 TextBoxNameFiles.Text = new DirectoryInfo(dir).Name;
@@ -1317,7 +1286,7 @@ namespace Fttd
                     case "Детали":
                         try
                         {
-                            string[] name = textItem.Split('|');                            
+                            string[] name = textItem.Split('|');
                             dbaccess.DbRead("DELETE FROM [stack_files] WHERE [detail_index] = '" + name[1] + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
                             if (ComboBoxTypeFiles.Text == "Задание")
                             { MessageBox.Show("Файл задания может быть привязан к другим деталям. Привязка к данной детали будет удалена.", "Удаление"); }
@@ -1399,7 +1368,6 @@ namespace Fttd
                 }
             }
             catch { }
-
         }
 
         // Чекбокс отображения меню включен(отображение по проектам) 
@@ -1443,7 +1411,7 @@ namespace Fttd
                     TextBlockFile.Text = "Файл";
                 }
             }
-            catch { }  
+            catch { }
         }
 
         // Действие при выборе номера задания в меню добавление файла (пункт "задание")
@@ -1451,12 +1419,12 @@ namespace Fttd
         {
             string task = ComboBoxTask.SelectedItem.ToString();
             Dbaccess dbaccess = new Dbaccess();
-            dbaccess.Dbselect("SELECT [task], [dir] FROM [task] WHERE [task] = '"+ task + "'");
+            dbaccess.Dbselect("SELECT [task], [dir] FROM [task] WHERE [task] = '" + task + "'");
             for (int i = 0; i < dbaccess.Querydata.Count; ++i)
             {
                 string[] vs = dbaccess.Querydata[i];
                 TextBoxFiles.Text = (vs[1]);
-                if(TextBoxFiles.Text != "") TextBoxNameFiles.Text = new DirectoryInfo(vs[1]).Name;
+                if (TextBoxFiles.Text != "") TextBoxNameFiles.Text = new DirectoryInfo(vs[1]).Name;
             }
         }
 
@@ -1649,6 +1617,98 @@ namespace Fttd
         {
             Window1 window = new Window1();
             window.Show();
+        }
+
+        private void TechnologyList_Click(object sender, RoutedEventArgs e)
+        {
+            Window2 window = new Window2();
+            window.Show();
+        }
+
+        private void Button_update_Click(object sender, RoutedEventArgs e)
+        {
+            State.stateTreeView = true;
+            TreeviewSet();
+        }
+
+        private void TextBox_Search_KeyUp(object sender, KeyEventArgs e)
+        {
+            TreeViewDet.Items.Clear();
+            if (TextBox_Search.Text != "" && TextBox_Search.Text != " ")
+            {
+                switch (TextBlock_type.Text)
+                {
+                    case "Детали":
+                        for (int i = 0; i < DetailList.detailColl.Count; ++i)
+                        {
+                            if (DetailList.detailColl[i].DetailName.Contains(TextBox_Search.Text) || DetailList.detailColl[i].Index.Contains(TextBox_Search.Text))
+                            {
+                                TextBlock IT2 = new TextBlock();
+                                IT2.Text = DetailList.detailColl[i].DetailName + '|' + DetailList.detailColl[i].Index;
+                                TreeViewDet.Items.Add(IT2);
+                            }
+                        }
+                        break;
+                    case "Приспособления":
+                        for (int i = 0; i < DetailList.deviceColl.Count; ++i)
+                        {
+                            if (DetailList.deviceColl[i].DeviceIndex.Contains(TextBox_Search.Text))
+                            {
+                                TextBlock IT2 = new TextBlock();
+                                IT2.Text = DetailList.deviceColl[i].DeviceIndex;
+                                TreeViewDet.Items.Add(IT2);
+                            }
+                        }
+                        break;
+                    case "Задания":
+                        for (int i = 0; i < DetailList.taskColl.Count; ++i)
+                        {
+                            if (DetailList.taskColl[i].TaskName.Contains(TextBox_Search.Text))
+                            {
+                                TextBlock IT2 = new TextBlock();
+                                IT2.Text = DetailList.taskColl[i].TaskName;
+                                TreeViewDet.Items.Add(IT2);
+                            }
+                        }
+                        break;
+                    case "Проекты":
+                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
+                        {
+                            if (DetailList.projectColl[i].ProjectName.Contains(TextBox_Search.Text))
+                            {
+                                TextBlock IT2 = new TextBlock();
+                                IT2.Text = DetailList.projectColl[i].ProjectName;
+                                TreeViewDet.Items.Add(IT2);
+                                ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
+                            }
+                        }
+                        break;
+                    case "Графики":
+                        for (int i = 0; i < DetailList.graphicsColl.Count; ++i)
+                        {
+                            if (DetailList.graphicsColl[i].NameGrap.Contains(TextBox_Search.Text))
+                            {
+                                TextBlock IT2 = new TextBlock();
+                                IT2.Text = DetailList.graphicsColl[i].NameGrap;
+                                TreeViewDet.Items.Add(IT2);
+                            }
+                        }
+                        break;
+                    case "Служебные":
+                        for (int i = 0; i < DetailList.servicesColl.Count; ++i)
+                        {
+                            if (DetailList.servicesColl[i].NameServ.Contains(TextBox_Search.Text))
+                            {
+                                TextBlock IT2 = new TextBlock();
+                                IT2.Text = DetailList.servicesColl[i].NameServ;
+                                TreeViewDet.Items.Add(IT2);
+                            }
+                        }
+                        break;
+                    default: break;
+                }
+            }
+            else { TreeviewSet(); }
         }
     }
 }

@@ -307,7 +307,7 @@ namespace Fttd
         /// <summary>
         /// Метод принимающий запрос в базу данных для транзакрии не возвращающей значения
         /// </summary>
-        /// <param name="query">Запрос</param>
+        /// <param name="query">Запрос</param>     
         public void DbRead(string query)
         {
             OleDbConnection con = new OleDbConnection();
@@ -325,6 +325,9 @@ namespace Fttd
             con.Close();
         }
     }
+    /// <summary>
+    /// Класс для данных задания
+    /// </summary>
     public class Tasken
     {
         public string Tasks { get; set; }
@@ -346,6 +349,34 @@ namespace Fttd
             Datein = datein;
             Dateout = dateout;
             Days = (Dateout - DateTime.Now).Days;
+        }
+
+        public Tasken()
+        {
+        }
+    }
+
+    public class TechnologyList
+    {
+        public string Inventory { get; set; }
+        public string Index{ get; set; }
+        public string DetailName { get; set; }
+        public string Project { get; set; }
+        public string Developer { get; set; }
+        public string DataAdd { get; set; }
+
+        public TechnologyList()
+        {
+        }
+
+        public TechnologyList(string inventory, string index, string detailName, string project, string developer, string dataAdd)
+        {
+            Inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+            Index = index ?? throw new ArgumentNullException(nameof(index));
+            DetailName = detailName ?? throw new ArgumentNullException(nameof(detailName));
+            Project = project ?? throw new ArgumentNullException(nameof(project));
+            Developer = developer ?? throw new ArgumentNullException(nameof(developer));
+            DataAdd = dataAdd ?? throw new ArgumentNullException(nameof(dataAdd));
         }
     }
 }
