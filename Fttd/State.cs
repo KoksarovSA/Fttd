@@ -50,12 +50,14 @@ namespace Fttd
                 DetailList.deviceColl.Add(new Device(vs[1], vs[0], vs[2], vs[3]));
             }
             dbaccess.Dbselect("SELECT [namegrap], [project], [dir], [data_add] FROM [graphics] ORDER BY [namegrap]");
+            DetailList.graphicsColl.Clear();
             for (int i = 0; i < dbaccess.Querydata.Count; i++)
             {
                 string[] vs = dbaccess.Querydata[i];
                 DetailList.graphicsColl.Add(new Graphics(vs[0], vs[1], vs[2], vs[3]));
             }
             dbaccess.Dbselect("SELECT [nameserv], [dir], [note], [data_add] FROM [service] ORDER BY [nameserv]");
+            DetailList.servicesColl.Clear();
             for (int i = 0; i < dbaccess.Querydata.Count; i++)
             {
                 string[] vs = dbaccess.Querydata[i];

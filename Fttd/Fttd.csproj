@@ -85,6 +85,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Entities\AllFiles.cs" />
     <Compile Include="Entities\Detail.cs" />
     <Compile Include="Entities\DetailList.cs" />
     <Compile Include="Entities\Developer.cs" />

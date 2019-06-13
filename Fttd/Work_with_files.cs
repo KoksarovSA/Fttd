@@ -354,29 +354,5 @@ namespace Fttd
         public Tasken()
         {
         }
-    }
-
-    public class TechnologyList
-    {
-        public string Inventory { get; set; }
-        public string Index{ get; set; }
-        public string DetailName { get; set; }
-        public string Project { get; set; }
-        public string Developer { get; set; }
-        public string DataAdd { get; set; }
-
-        public TechnologyList()
-        {
-        }
-
-        public TechnologyList(string inventory, string index, string detailName, string project, string developer, string dataAdd)
-        {
-            Inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-            Index = index ?? throw new ArgumentNullException(nameof(index));
-            DetailName = detailName ?? throw new ArgumentNullException(nameof(detailName));
-            Project = project ?? throw new ArgumentNullException(nameof(project));
-            Developer = developer ?? throw new ArgumentNullException(nameof(developer));
-            DataAdd = dataAdd ?? throw new ArgumentNullException(nameof(dataAdd));
-        }
-    }
+    }    
 }

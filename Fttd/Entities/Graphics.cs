@@ -24,5 +24,11 @@ namespace Fttd.Entities
         public string ProjectGrap { get; set; }
         public string DirGrap { get; set; }
         public DateTime DateAddGrap { get; set; }
+
+        public override string ToString()
+        {
+            string description = "Название графика: " + NameGrap + "\nПроект: " + ProjectGrap + "\nДиректория графика: " + DirGrap + "\nДата добавления: " + DateAddGrap;
+            return description;
+        }
     }
 }

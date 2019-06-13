@@ -30,5 +30,11 @@ namespace Fttd
             Task = task ?? throw new ArgumentNullException(nameof(task));
             DataAdd = dataAdd ?? throw new ArgumentNullException(nameof(dataAdd));
         }
+
+        public override string ToString()
+        {
+            string description = "Инвентарный номер: "+Convert.ToString(Inventory) +"\nИндекс детали: "+ Index + "\nНазвание детали: "+ DetailName + "\nПроект: "+ Project + "\nРазработал: "+ Developer + "\nЗадание: "+ Task + "\nДата добавления: "+ DataAdd;
+            return description;
+        }
     }
 }

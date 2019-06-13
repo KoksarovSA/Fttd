@@ -18,5 +18,10 @@ namespace Fttd
         }
 
         public string DeveloperName { get; set; }
+
+        public override string ToString()
+        {
+            return DeveloperName;
+        }
     }
 }

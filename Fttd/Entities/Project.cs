@@ -18,5 +18,10 @@ namespace Fttd
         }
 
         public string ProjectName { get; set; }
+
+        public override string ToString()
+        {
+            return ProjectName;
+        }
     }
 }

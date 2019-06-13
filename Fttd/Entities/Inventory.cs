@@ -18,5 +18,10 @@ namespace Fttd
         }
 
         public double InventoryNom { get; set; }
+
+        public override string ToString()
+        {
+            return Convert.ToString(InventoryNom);
+        }
     }
 }

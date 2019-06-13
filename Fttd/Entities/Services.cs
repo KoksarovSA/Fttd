@@ -24,5 +24,12 @@ namespace Fttd.Entities
         public string DirServ { get; set; }
         public string Note { get; set; }
         public DateTime DateAddServ { get; set; }
+
+        public override string ToString()
+        {
+            string description = "Название служебной: " + NameServ + "\nДиректория служебной: " + DirServ + "\nПримечание: " + Note + "\nДата добавления: " + Convert.ToString(DateAddServ);
+            return description;
+        }
+
     }
 }

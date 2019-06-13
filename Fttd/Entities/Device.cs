@@ -24,5 +24,11 @@ namespace Fttd
         public string DeviceIndex { get; set; }
         public string DeviceDeveloper { get; set; }
         public string DataAdd { get; set; }
+
+        public override string ToString()
+        {
+            string description = "Индекс детали: " + DeviceIndex + "\nНазвание детали: " + DeviceName + "\nРазработал: " + DeviceDeveloper + "\nДата добавления: " + DataAdd;
+            return description;
+        }
     }
 }
