@@ -29,25 +29,27 @@ namespace Fttd
             ProjectTaskName = projectTaskName ?? throw new ArgumentNullException(nameof(projectTaskName));
             TaskDir = taskDir ?? throw new ArgumentNullException(nameof(taskDir));
             TaskNote = taskNote ?? throw new ArgumentNullException(nameof(taskNote));
-            TaskIsCurrent = taskIsCurrent ?? throw new ArgumentNullException(nameof(taskIsCurrent));
+            TaskIsCurrent = Convert.ToBoolean(taskIsCurrent);
             if (taskDateIn != "") { TaskDateIn = DateTime.Parse(taskDateIn); }
             if (taskDateOut != "") { TaskDateOut = DateTime.Parse(taskDateOut); }
+            Days = (TaskDateOut - DateTime.Now).Days;
         }
 
         public string TaskName { get; set; }
         public string ProjectTaskName { get; set; }
         public string TaskDir { get; set; }
         public string TaskNote { get; set; }
-        public string TaskIsCurrent { get; set; }
+        public bool TaskIsCurrent { get; set; }
         public DateTime TaskDateIn { get; set; }
         public DateTime TaskDateOut { get; set; }
         public string Actuality
         { get
             {
-                if (TaskIsCurrent == "true") return "Актуально";
+                if (TaskIsCurrent) return "Актуально";
                 else return "Не актуально";
             }
         }
+        public int Days { get; set; }
 
         public override string ToString()
         {

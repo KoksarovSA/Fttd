@@ -332,16 +332,16 @@
         </Grid>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Height="40" HorizontalAlignment="Right">
             <Button Name="Button_update" ToolTip="Обновить" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_update_Click" >
-                <materialDesign:PackIcon Kind="Update" Width="30" Height="30"/>
+                <materialDesign:PackIcon Kind="Autorenew" Width="30" Height="30"/>
             </Button>
             <Button Name="Button_settings" ToolTip="Настройки" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_settings_Click">
                 <materialDesign:PackIcon Kind="Settings" Width="30" Height="30"/>
             </Button>
             <Button Name="Button_minimized" ToolTip="Свернуть окно" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_minimized_Click">
-                <materialDesign:PackIcon Kind="ArrowCollapseDown" Width="30" Height="30"/>
+                <materialDesign:PackIcon Kind="BorderBottomVariant" Width="30" Height="30"/>
             </Button>
             <Button Name="Button_maxsize" ToolTip="Во весь экран" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_maxsize_Click">
-                <materialDesign:PackIcon Kind="AspectRatio" Width="30" Height="30"/>
+                <materialDesign:PackIcon Kind="BorderAllVariant" Width="30" Height="30"/>
             </Button>
             <Button Name="ButtonExit" ToolTip="Выход" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonExit_Click">
                 <materialDesign:PackIcon Kind="Power" Width="30" Height="30" Foreground="#DDFFFFFF"/>

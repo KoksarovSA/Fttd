@@ -1,9 +1,8 @@
 ﻿using Fttd.Entities;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Fttd
 {
@@ -64,6 +63,19 @@ namespace Fttd
                 DetailList.servicesColl.Add(new Services(vs[0], vs[1], vs[2], vs[3]));
             }
             stateTreeView = false;
+        }
+
+        /// <summary>
+        /// Метод бэкапит базу данных через 6 дней  
+        /// </summary>
+        public static void BackupFTTDDB()
+        {
+            if (Math.Abs(DateTime.Now.Day - Convert.ToInt32(Param_in.GetFTTDBackup())) > 6)
+            {
+                Directory.CreateDirectory(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup");
+                if (!File.Exists(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name)) File.Copy(Param_in.DirDb, Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name);
+                Param_in.SetFTTDBackup(Convert.ToString(DateTime.Now.Day));
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Fttd.Entities;
+using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
 using System.Configuration;
@@ -30,22 +31,9 @@ namespace Fttd
                 TreeviewSet();
                 TextBoxBD.Text = Param_in.DirDb;
                 TextBoxDir.Text = Param_in.DirFiles;
-                BackupFTTDDB();
+                State.BackupFTTDDB();
             }
             catch (Exception e) { MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
-        }
-
-        /// <summary>
-        /// Метод бэкапит базу данных через 6 дней  
-        /// </summary>
-        public void BackupFTTDDB()
-        {
-            if (Math.Abs(DateTime.Now.Day - Convert.ToInt32(Param_in.GetFTTDBackup())) > 6)
-            {
-                Directory.CreateDirectory(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup");
-                if (!File.Exists(Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name)) File.Copy(Param_in.DirDb, Directory.GetParent(Param_in.DirDb).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(Param_in.DirDb).Name);
-                Param_in.SetFTTDBackup(Convert.ToString(DateTime.Now.Day));
-            }
         }
 
         /// <summary>
@@ -56,58 +44,38 @@ namespace Fttd
         /// <param name="name">Название детали</param>
         /// <param name="file_type">Тип файла</param>
         /// <param name="note">Примечание</param>
-        public async void CopyFile(string dirout, string index, string name, string newfilename, string file_type = "None", string note = "None")
+        public void CopyFile(string dirout, string index, string name, string newfilename, string file_type = "None", string note = "None")
         {
-            Work_with_files work = new Work_with_files(dirout, index, name, TextBlock_type.Text, newfilename);
-            switch (file_type)
+            AllFiles file = new AllFiles(name, index, TextBlock_type.Text, dirout, note);
+            switch (TextBlock_type.Text)
             {
-                case "Задание":
+                case "Задания":
                     {
                         Dbaccess dbaccess = new Dbaccess();
-                        await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
+                        dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + file.Detail_index + "', '" + file.Detail_name + "', '" + file.File_name + "', '" + file_type + "', '" + file.File_dir_in_short + "', '" + file.File_note + "'");
                         break;
                     }
-                default:
+                case "Приспособления":
                     {
-                        if (TextBlock_type.Text == "Приспособления")
+                        if (file.Copy_file())
                         {
-                            if (File.Exists(work.Dir_file_copy_in))
-                            {
-                                MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе.", "Ошибка");
-                            }
-                            else
-                            {
-                                Directory.CreateDirectory(Param_in.DirFiles + "\\Приспособления\\" + index + "");
-                                await Task.Run(() => File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in));
-                                Dbaccess dbaccess = new Dbaccess();
-                                await Task.Run(() => dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
-                            }
-                        }
-                        else
-                        {
-                            if (File.Exists(work.Dir_file_copy_in))
-                            {
-                                MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе.", "Ошибка");
-                            }
-                            else
-                            {
-                                Directory.CreateDirectory(Param_in.DirFiles + "\\" + name + "_" + index + "");
-                                await Task.Run(() => File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in));
-                                Dbaccess dbaccess = new Dbaccess();
-                                await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + note + "'"));
-                            }
+                            Dbaccess dbaccess = new Dbaccess();
+                            dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + file.Detail_index + "', '" + file.File_name + "', '" + file_type + "', '" + file.File_dir_in_short + "', '" + file.File_note + "'");
                         }
                         break;
                     }
-            }
+                case "Детали":
+                    {
+                        if (file.Copy_file())
+                        {
+                            Dbaccess dbaccess = new Dbaccess();
+                            dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + file.Detail_index + "', '" + file.Detail_name + "', '" + file.File_name + "', '" + file_type + "', '" + file.File_dir_in_short + "', '" + file.File_note + "'");
+                        }
+                        break;
+                    }
+                default: break;
+            }            
             SelectedTreeViewItem();
-        }
-
-        public string DirInShortdir(string d)
-        {
-            string[] vs = d.Split('\\');
-            string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
-            return vs1;
         }
 
         /// <summary>
@@ -468,7 +436,7 @@ namespace Fttd
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
-                            x = "Деталь: " + vs[1] + "\n" + "Индекс: " + vs[0] + "\n" + "Инв.№ " + vs[2] + "\n" + "Проект: " + vs[4] + "\n" + "№ Задания: " + vs[3] + "\n" + "Разработал: " + vs[5] + "\n" + "Дата добавления: " + vs[6];
+                            x = "Деталь: " + vs[1] + "\nИндекс: " + vs[0] + "\nИнв.№ " + vs[2] + "\nПроект: " + vs[4] + "\n№ Задания: " + vs[3] + "\nРазработал: " + vs[5] + "\nДата добавления: " + vs[6];
                             ComboBoxIndex.Text = vs[0];
                             ComboBoxName.Text = vs[1];
                             ComboBoxNPU.Text = vs[2];
@@ -489,7 +457,7 @@ namespace Fttd
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
-                            x = "Приспособление: " + vs[1] + "\n" + "Индекс: " + vs[0] + "\n" + "Разработал: " + vs[2] + "\n" + "Дата добавления: " + vs[3];
+                            x = "Приспособление: " + vs[1] + "\nИндекс: " + vs[0] + "\nРазработал: " + vs[2] + "\nДата добавления: " + vs[3];
                             ComboBoxIndex.Text = vs[0];
                             ComboBoxName.Text = vs[1];
                             ComboBoxRazrab.Text = vs[2];
@@ -515,14 +483,14 @@ namespace Fttd
                             {
                                 dateTime1 = DateTime.Parse(vs[3]);
                                 dateTime2 = DateTime.Parse(vs[4]);
-                                x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\n" + "Выполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
+                                x = "Задание: " + vs[0] + "\nПроект: " + vs[1] + "\nАктуальное: " + current + "\nДата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\nВыполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
                                 data1.SelectedDate = dateTime1;
                                 data2.SelectedDate = dateTime2;
                             }
                             catch { }
                             ComboBoxZad.Text = vs[0];
                             ComboBoxProekt.Text = vs[1];
-                            x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\n" + "Выполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
+                            x = "Задание: " + vs[0] + "\nПроект: " + vs[1] + "\nАктуальное: " + current + "\nДата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\nВыполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
                         }
                         return x;
                     }
@@ -540,7 +508,7 @@ namespace Fttd
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
-                            x = "График: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Дата добавления: " + vs[2];
+                            x = "График: " + vs[0] + "\nПроект: " + vs[1] + "\nДата добавления: " + vs[2];
                             ComboBoxName.Text = vs[0];
                             ComboBoxProekt.Text = vs[1];
                         }
@@ -557,7 +525,7 @@ namespace Fttd
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
-                            x = "Служебная: " + vs[0] + "\n" + "Короткое описание: " + vs[1] + "\n" + "Дата добавления: " + vs[2];
+                            x = "Служебная: " + vs[0] + "\nКороткое описание: " + vs[1] + "\nДата добавления: " + vs[2];
                             ComboBoxIndex.Text = vs[0];
                             ComboBoxName.Text = vs[1];
                         }
@@ -979,17 +947,16 @@ namespace Fttd
                                 {
                                     try
                                     {
-                                        Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "Задание", new DirectoryInfo(TextBoxDirFile.Text).Name);
-                                        if (File.Exists(work.Dir_file_copy_in))
+                                        AllFiles file = new AllFiles("Задания", TextBoxDirFile.Text);
+                                        if (File.Exists(file.File_dir_in))
                                         {
-                                            MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию", "Ошибка");
+                                            MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию", "Ошибка");
                                         }
                                         else
                                         {
-                                            Directory.CreateDirectory(Param_in.DirFiles + "\\Задания");
-                                            File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                            file.Copy_file();
                                         }
-                                        dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True, [dir] = '" + DirInShortdir(work.Dir_file_copy_in) + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
+                                        dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True, [dir] = '" + file.File_dir_in_short + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
                                     }
                                     catch { }
                                 }
@@ -1000,17 +967,16 @@ namespace Fttd
                             {
                                 try
                                 {
-                                    Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "Задание", new DirectoryInfo(TextBoxDirFile.Text).Name);
-                                    if (File.Exists(work.Dir_file_copy_in))
+                                    AllFiles file = new AllFiles("Задания", TextBoxDirFile.Text);
+                                    if (File.Exists(file.File_dir_in))
                                     {
-                                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию", "Ошибка");
+                                        MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию", "Ошибка");
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(Param_in.DirFiles + "\\Задания");
-                                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                        file.Copy_file();
                                     }
-                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
+                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + file.File_dir_in_short + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
                                 }
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
@@ -1035,17 +1001,16 @@ namespace Fttd
                             {
                                 try
                                 {
-                                    Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "График", new DirectoryInfo(TextBoxDirFile.Text).Name);
-                                    if (File.Exists(work.Dir_file_copy_in))
+                                    AllFiles file = new AllFiles("Графики", TextBoxDirFile.Text);
+                                    if (File.Exists(file.File_dir_in))
                                     {
-                                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
+                                        MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(Param_in.DirFiles + "\\Графики");
-                                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                        file.Copy_file();
                                     }
-                                    dbaccess.Dbinsert("graphics", "[namegrap], [project], [dir]", "'" + ComboBoxName.Text + "', '" + ComboBoxProekt.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "'");
+                                    dbaccess.Dbinsert("graphics", "[namegrap], [project], [dir]", "'" + ComboBoxName.Text + "', '" + ComboBoxProekt.Text + "', '" + file.File_dir_in_short + "'");
                                 }
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
@@ -1063,17 +1028,16 @@ namespace Fttd
                             {
                                 try
                                 {
-                                    Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "Служебная", new DirectoryInfo(TextBoxDirFile.Text).Name);
-                                    if (File.Exists(work.Dir_file_copy_in))
+                                    AllFiles file = new AllFiles("Служебные", TextBoxDirFile.Text);
+                                    if (File.Exists(file.File_dir_in))
                                     {
-                                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
+                                        MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(Param_in.DirFiles + "\\Служебные");
-                                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                        file.Copy_file();
                                     }
-                                    dbaccess.Dbinsert("service", "[nameserv], [note], [dir]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + DirInShortdir(work.Dir_file_copy_in) + "'");
+                                    dbaccess.Dbinsert("service", "[nameserv], [note], [dir]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + file.File_dir_in_short + "'");
                                 }
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
@@ -1099,7 +1063,7 @@ namespace Fttd
                     case "Детали":
                         if (ComboBoxIndex.Text != "")
                         {
-                            dbaccess.DbRead("UPDATE [detail_db] SET [detail_name] = '" + ComboBoxName.Text + "', [number_task] = '" + ComboBoxZad.Text + "', [project] = '" + ComboBoxProekt.Text + "', [razrabotal] = '" + ComboBoxRazrab.Text + "' WHERE [detail_index] = '" + ComboBoxIndex.Text + "' AND [inventory] = '" + ComboBoxNPU.Text + "'");
+                            dbaccess.DbRead("UPDATE [detail_db] SET [detail_name] = '" + ComboBoxName.Text + "', [number_task] = '" + ComboBoxZad.Text + "', [project] = '" + ComboBoxProekt.Text + "', [razrabotal] = '" + ComboBoxRazrab.Text + "' WHERE [detail_index] = '" + ComboBoxIndex.Text + "' AND [inventory] = " + Convert.ToDouble(ComboBoxNPU.Text) + "");
                         }
                         else { MessageBox.Show("Выберите деталь", "Ошибка"); }
                         break;
@@ -1158,12 +1122,30 @@ namespace Fttd
                         if (ComboBoxName.Text != "")
                         {
                             dbaccess.DbRead("DELETE FROM [graphics] WHERE [namegrap] = '" + ComboBoxName.Text + "'");
+                            try
+                            {
+                                foreach (Graphics item in DetailList.graphicsColl)
+                                {
+                                    if (item.NameGrap.Contains(ComboBoxName.Text))
+                                    {
+                                        File.Delete(@"" + Param_in.DirFiles + "\\" + item.DirGrap + ""); MessageBox.Show("Файл успешно удалён.", "Удаление");
+                                    }
+                                }
+                            }
+                            catch { }
                         }
                         else { MessageBox.Show("Выберите график", "Ошибка"); }
                         break;
                     case "Служебные":
                         if (ComboBoxIndex.Text != "")
                         {
+                            foreach (Services item in DetailList.servicesColl)
+                            {
+                                if (item.NameServ.Contains(ComboBoxIndex.Text))
+                                {
+                                    File.Delete(@"" + Param_in.DirFiles + "\\" + item.DirServ + ""); MessageBox.Show("Файл успешно удалён.", "Удаление");
+                                }
+                            }
                             dbaccess.DbRead("DELETE FROM [service] WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
                         }
                         else { MessageBox.Show("Выберите служебную", "Ошибка"); }
@@ -1336,31 +1318,55 @@ namespace Fttd
                         try
                         {
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + "\\Приспособления\\" + TextBoxFiles.Text + "");
+                            Process.Start(@"" + Param_in.DirFiles + TextBoxFiles.Text + "");
                         }
                         catch { }
                         break;
                     case "Задания":
                         try
                         {
+                            string dir = "";
+                            foreach (TaskDet item in DetailList.taskColl)
+                            {
+                                if (item.TaskDir.Contains(textDataGrid))
+                                {
+                                    dir = item.TaskDir;
+                                }
+                            }
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + "\\Задания\\" + textDataGrid + "");
+                            Process.Start(@"" + Param_in.DirFiles + dir + "");
                         }
                         catch { }
                         break;
                     case "Графики":
                         try
                         {
+                            string dir = "";
+                            foreach (Graphics item in DetailList.graphicsColl)
+                            {
+                                if (item.DirGrap.Contains(textDataGrid))
+                                {
+                                    dir = item.DirGrap;
+                                }
+                            }
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + "\\Графики\\" + textDataGrid + "");
+                            Process.Start(@"" + Param_in.DirFiles + dir + "");
                         }
                         catch { }
                         break;
                     case "Служебные":
                         try
                         {
+                            string dir = "";
+                            foreach (Services item in DetailList.servicesColl)
+                            {
+                                if (item.DirServ.Contains(textDataGrid))
+                                {
+                                    dir = item.DirServ;
+                                }
+                            }
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + "\\Служебные\\" + textDataGrid + "");
+                            Process.Start(@"" + Param_in.DirFiles + dir + "");
                         }
                         catch { }
                         break;

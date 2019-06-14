@@ -19,18 +19,34 @@ namespace Fttd.Entities
             File_dir_out = file_dir_out ?? throw new ArgumentNullException(nameof(file_dir_out));
         }
 
-        public AllFiles(string detail_name, string detail_index, string project, string file_type, string file_dir_out)
+        public AllFiles(string detail_name, string detail_index, string file_type, string file_dir_out, string file_note)
         {
             Detail_name = detail_name ?? throw new ArgumentNullException(nameof(detail_name));
             Detail_index = detail_index ?? throw new ArgumentNullException(nameof(detail_index));
-            Project = project ?? throw new ArgumentNullException(nameof(project));
+            File_note = file_note ?? throw new ArgumentNullException(nameof(file_note));
             File_type = file_type ?? throw new ArgumentNullException(nameof(file_type));
             File_dir_out = file_dir_out ?? throw new ArgumentNullException(nameof(file_dir_out));
         }
 
         public string Detail_name { get; set; }
         public string Detail_index { get; set; }
-        public string Project { get; set; }
+        public string File_note { get; set; }
+        public string Project
+        {
+            get
+            {
+                string pr = null;
+                foreach (Detail item in DetailList.detailColl)
+                {
+                    if (item.Index == Detail_index)
+                    {
+                        pr = item.Project;
+                        break;
+                    }
+                }
+                return pr;
+            }
+        }
         public string File_name
         {
             get
@@ -47,11 +63,19 @@ namespace Fttd.Entities
                 string dir;
                 switch (File_type)
                 {
-                    case "Задание": dir = @"" + Param_in.DirFiles + "\\" + Project + "\\" + File_type + "\\" + File_name; break;
-                    case "График": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
-                    case "Служебная": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
-                    case "Приспособления": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
-                    default: dir = @"" + Param_in.DirFiles + "\\" + Project + "\\" + Detail_name + "_" + Detail_index + "\\" + File_name; break;
+                    case "Задания": dir = @"" + Param_in.DirFiles + "\\" + Project + "\\" + File_type + "\\" + File_name; break;
+                    case "Графики": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
+                    case "Служебные": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
+                    case "Приспособления": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + Detail_index + "\\" + File_name; break;
+                    default:
+                        {
+                            if (File_dir_out.Contains("Задания"))
+                            {
+                                dir = File_dir_out;
+                            }
+                            else dir = @"" + Param_in.DirFiles + "\\" + Project + "\\" + Detail_name + "_" + Detail_index + "\\" + File_name;
+                            break;
+                        }
                 }
                 return dir;
             }
@@ -63,27 +87,44 @@ namespace Fttd.Entities
                 string dir;
                 switch (File_type)
                 {
-                    case "Задание": dir = @"\\" + Project + "\\" + File_type + "\\" + File_name; break;
-                    case "График": dir = @"\\" + File_type + "\\" + File_name; break;
-                    case "Служебная": dir = @"\\" + File_type + "\\" + File_name; break;
-                    case "Приспособления": dir = @"\\" + File_type + "\\" + File_name; break;
-                    default: dir = @"\\" + Project + "\\" + Detail_name + "_" + Detail_index + "\\" + File_name; break;
+                    case "Задания": dir = @"\\" + Project + "\\" + File_type + "\\" + File_name; break;
+                    case "Графики": dir = @"\\" + File_type + "\\" + File_name; break;
+                    case "Служебные": dir = @"\\" + File_type + "\\" + File_name; break;
+                    case "Приспособления": dir = @"\\" + File_type + "\\" + Detail_index + "\\" + File_name; break;
+                    default:
+                        {
+                            if (File_dir_out.Contains("Задания"))
+                            {
+                                dir = File_dir_out;
+                            }
+                            else dir = @"\\" + Project + "\\" + Detail_name + "_" + Detail_index + "\\" + File_name; break;
+                        }
                 }
                 return dir;
             }
         }
         public string File_dir_out { get; set; }
 
-        public void Copy_file()
+        public bool Copy_file()
         {
             if (File.Exists(File_dir_in))
             {
                 System.Windows.Forms.MessageBox.Show(File_dir_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
+                return false;
             }
             else
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(File_dir_in));
-                File.Copy(File_dir_out, File_dir_in);
+                if (File_type == "Детали" && File_dir_out.Contains("Задания"))
+                {
+                    return true;
+                }
+                else
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(File_dir_in));
+                    File.Copy(File_dir_out, File_dir_in);
+                    return true;
+                }
+
             }
         }
     }

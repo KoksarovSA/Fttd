@@ -6,51 +6,6 @@ using System.Data.OleDb;
 
 namespace Fttd
 {
-    class Work_with_files
-    {
-        private string dir_file_copy_out;
-        private string dir_file_copy_in;
-        private string file;
-
-        public string Dir_file_copy_out
-        {
-            get { return dir_file_copy_out; }
-            set { dir_file_copy_out = value; }
-        }
-
-        public string Dir_file_copy_in
-        {
-            get { return dir_file_copy_in; }
-            set { dir_file_copy_in = value; }
-        }       
-
-        public string File
-        {
-            get { return file; }
-            set { file = value; }
-        }
-
-        /// <summary>
-        /// Конструктор класса Work_with_files
-        /// </summary>
-        /// <param name="dirout">Директория файла (откуда)</param>
-        /// <param name="index">Индекс деталм</param>
-        /// <param name="name">Имя детали</param>
-        public Work_with_files(string dirout, string index, string name, string file_type, string newfilename)
-        {
-            Dir_file_copy_out = dirout;
-            file = newfilename;
-            switch (file_type)
-            {
-                case "Задание": Dir_file_copy_in = @"" + Param_in.DirFiles + "\\Задания\\" + File; break;
-                case "График": Dir_file_copy_in = @"" + Param_in.DirFiles + "\\Графики\\" + File; break;
-                case "Служебная": Dir_file_copy_in = @"" + Param_in.DirFiles + "\\Служебные\\" + File; break;
-                case "Приспособления": Dir_file_copy_in = @"" + Param_in.DirFiles + "\\Приспособления\\" + index + "\\" + File; break;
-                default: Dir_file_copy_in = @"" + Param_in.DirFiles + "\\" + name + "_" + index + "\\" + File; break;
-            }
-        }
-    }
-
     class Table
     {
         public string Name { get; set; }
