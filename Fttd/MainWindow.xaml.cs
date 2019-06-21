@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,7 +22,6 @@ namespace Fttd
         public MainWindow()
         {
             InitializeComponent();
-            if (ConfigurationManager.AppSettings.Get("CheckBoxTreeViewSet") == "true") { CheckBoxTreeViewSet.IsChecked = true; }
             try
             {
                 Param_in.GetDirDB();
@@ -74,7 +74,7 @@ namespace Fttd
                         break;
                     }
                 default: break;
-            }            
+            }
             SelectedTreeViewItem();
         }
 
@@ -88,210 +88,117 @@ namespace Fttd
             switch (TextBlock_type.Text)
             {
                 case "Детали":
-                    if (CheckBoxTreeViewSet.IsChecked == false)
+                    ComboBoxProekt.Items.Clear();
+                    ComboBoxIndex.Items.Clear();
+                    ComboBoxName.Items.Clear();
+                    foreach (Project itemP in State.projectColl)
                     {
-                        ComboBoxIndex.Items.Clear();
-                        ComboBoxName.Items.Clear();
-                        for (int i = 0; i < DetailList.detailColl.Count; ++i)
+                        ComboBoxProekt.Items.Add(itemP.ProjectName);
+                        TreeViewItem ITProekt = new TreeViewItem();
+                        ITProekt.Header = itemP.ProjectName;
+                        TreeViewDet.Items.Add(ITProekt);
+                        foreach (Detail itemD in State.detailColl.Where(itemD => itemD.Project == itemP.ProjectName))
                         {
-                            TextBlock IT2 = new TextBlock();
-                            IT2.Text = DetailList.detailColl[i].DetailName + '|' + DetailList.detailColl[i].Index;
-                            TreeViewDet.Items.Add(IT2);
-                            ComboBoxIndex.Items.Add(DetailList.detailColl[i].Index);
-                            ComboBoxName.Items.Add(DetailList.detailColl[i].DetailName);
-                        }
-                        ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < DetailList.projectColl.Count; i++)
-                        {
-                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
-                        }
-                        ComboBoxZad.Items.Clear();
-                        ComboBoxTask.Items.Clear();
-                        for (int i = 0; i < DetailList.taskColl.Count; ++i)
-                        {
-                            ComboBoxZad.Items.Add(DetailList.taskColl[i].TaskName);
-                            ComboBoxTask.Items.Add(DetailList.taskColl[i].TaskName);
-                        }
-                        ComboBoxRazrab.Items.Clear();
-                        for (int i = 0; i < DetailList.developerColl.Count; ++i)
-                        {
-                            ComboBoxRazrab.Items.Add(DetailList.developerColl[i].DeveloperName);
-                        }
-                        ComboBoxNPU.Items.Clear();
-                        for (int i = 0; i < DetailList.inventoryColl.Count; ++i)
-                        {
-                            ComboBoxNPU.Items.Add(DetailList.inventoryColl[i].InventoryNom);
+                            TextBlock ITDet = new TextBlock();
+                            ITDet.Text = itemD.DetailName + '|' + itemD.Index;
+                            ITProekt.Items.Add(ITDet);
+                            ComboBoxIndex.Items.Add(itemD.Index);
+                            ComboBoxName.Items.Add(itemD.DetailName);
                         }
                     }
-                    else if (CheckBoxTreeViewSet.IsChecked == true)
+                    ComboBoxZad.Items.Clear();
+                    ComboBoxTask.Items.Clear();
+                    foreach (TaskDet item in State.taskColl)
                     {
-
-                        ComboBoxProekt.Items.Clear();
-                        ComboBoxIndex.Items.Clear();
-                        ComboBoxName.Items.Clear();
-                        Dbaccess dbaccess2 = new Dbaccess();
-                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
-                        {
-                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
-                            TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = DetailList.projectColl[i].ProjectName;
-                            TreeViewDet.Items.Add(ITProekt);
-                            for (int j = 0; j < DetailList.detailColl.Count; ++j)
-                            {
-                                if (DetailList.detailColl[j].Project == DetailList.projectColl[i].ProjectName)
-                                {
-                                    TextBlock ITDet = new TextBlock();
-                                    ITDet.Text = DetailList.detailColl[j].DetailName + '|' + DetailList.detailColl[j].Index;
-                                    ITProekt.Items.Add(ITDet);
-                                    ComboBoxIndex.Items.Add(DetailList.detailColl[j].Index);
-                                    ComboBoxName.Items.Add(DetailList.detailColl[j].DetailName);
-                                }
-                            }
-                        }
-                        ComboBoxZad.Items.Clear();
-                        ComboBoxTask.Items.Clear();
-                        for (int i = 0; i < DetailList.taskColl.Count; ++i)
-                        {
-                            ComboBoxZad.Items.Add(DetailList.taskColl[i].TaskName);
-                            ComboBoxTask.Items.Add(DetailList.taskColl[i].TaskName);
-                        }
-                        ComboBoxRazrab.Items.Clear();
-                        for (int i = 0; i < DetailList.developerColl.Count; ++i)
-                        {
-                            ComboBoxRazrab.Items.Add(DetailList.developerColl[i].DeveloperName);
-                        }
-                        ComboBoxNPU.Items.Clear();
-                        for (int i = 0; i < DetailList.inventoryColl.Count; ++i)
-                        {
-                            ComboBoxNPU.Items.Add(DetailList.inventoryColl[i].InventoryNom);
-                        }
+                        ComboBoxZad.Items.Add(item.TaskName);
+                        ComboBoxTask.Items.Add(item.TaskName);
+                    }
+                    ComboBoxRazrab.Items.Clear();
+                    foreach (Developer item in State.developerColl.OrderBy(item => item.DeveloperName).Distinct())
+                    {
+                        ComboBoxRazrab.Items.Add(item.DeveloperName);
+                    }
+                    ComboBoxNPU.Items.Clear();
+                    foreach (Inventory item in State.inventoryColl.OrderByDescending(item => item.InventoryNom))
+                    {
+                        ComboBoxNPU.Items.Add(item.InventoryNom);
                     }
                     break;
                 case "Приспособления":
                     ComboBoxIndex.Items.Clear();
                     ComboBoxName.Items.Clear();
-                    for (int i = 0; i < DetailList.deviceColl.Count; ++i)
+                    foreach (Device item in State.deviceColl)
                     {
                         TextBlock IT2 = new TextBlock();
-                        IT2.Text = DetailList.deviceColl[i].DeviceIndex;
+                        IT2.Text = item.DeviceIndex;
                         TreeViewDet.Items.Add(IT2);
-                        ComboBoxIndex.Items.Add(DetailList.deviceColl[i].DeviceIndex);
+                        ComboBoxIndex.Items.Add(item.DeviceIndex);
                     }
                     ComboBoxRazrab.Items.Clear();
-                    for (int i = 0; i < DetailList.developerColl.Count; ++i)
+                    foreach (Developer item in State.developerColl.OrderBy(item => item.DeveloperName).Distinct())
                     {
-                        ComboBoxRazrab.Items.Add(DetailList.developerColl[i].DeveloperName);
+                        ComboBoxRazrab.Items.Add(item.DeveloperName);
                     }
                     break;
                 case "Задания":
-                    if (CheckBoxTreeViewSet.IsChecked == false)
+                    ComboBoxProekt.Items.Clear();
+                    data1.Text = "";
+                    data2.Text = "";
+                    chTaskIsCurrent.IsChecked = false;
+                    foreach (Project itemP in State.projectColl)
                     {
-                        ComboBoxZad.Items.Clear();
-                        ComboBoxTask.Items.Clear();
-                        data1.Text = "";
-                        data2.Text = "";
-                        chTaskIsCurrent.IsChecked = false;
-                        for (int i = 0; i < DetailList.taskColl.Count; ++i)
+                        ComboBoxProekt.Items.Add(itemP.ProjectName);
+                        TreeViewItem ITProekt = new TreeViewItem();
+                        ITProekt.Header = itemP.ProjectName;
+                        TreeViewDet.Items.Add(ITProekt);
+                        foreach (TaskDet itemD in State.taskColl.Where(itemD => itemD.ProjectTaskName == itemP.ProjectName))
                         {
-                            TextBlock IT2 = new TextBlock();
-                            IT2.Text = DetailList.taskColl[i].TaskName;
-                            TreeViewDet.Items.Add(IT2);
-                            ComboBoxZad.Items.Add(DetailList.taskColl[i].TaskName);
-                            ComboBoxTask.Items.Add(DetailList.taskColl[i].TaskName);
-
+                            TextBlock ITDet = new TextBlock();
+                            ITDet.Text = itemD.TaskName;
+                            ITProekt.Items.Add(ITDet);
+                            ComboBoxZad.Items.Add(itemD.TaskName);
+                            ComboBoxTask.Items.Add(itemD.TaskName);
                         }
-                        ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
-                        {
-                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
-                        }
-                    }
-                    else if (CheckBoxTreeViewSet.IsChecked == true)
-                    {
-                        ComboBoxProekt.Items.Clear();
-                        data1.Text = "";
-                        data2.Text = "";
-                        chTaskIsCurrent.IsChecked = false;
-                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
-                        {
-                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
-                            TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = DetailList.projectColl[i].ProjectName;
-                            TreeViewDet.Items.Add(ITProekt);
-                            for (int j = 0; j < DetailList.taskColl.Count; ++j)
-                            {
-                                if (DetailList.taskColl[j].ProjectTaskName == DetailList.projectColl[i].ProjectName)
-                                {
-                                    TextBlock ITDet = new TextBlock();
-                                    ITDet.Text = DetailList.taskColl[j].TaskName;
-                                    ITProekt.Items.Add(ITDet);
-                                    ComboBoxZad.Items.Add(DetailList.taskColl[j].TaskName);
-                                    ComboBoxTask.Items.Add(DetailList.taskColl[j].TaskName);
-                                }
-                            }
-                        }
-                    }
+                    }                   
                     break;
                 case "Проекты":
                     ComboBoxProekt.Items.Clear();
-                    for (int i = 0; i < DetailList.projectColl.Count; ++i)
+                    foreach (Project itemP in State.projectColl)
                     {
-                        TextBlock IT2 = new TextBlock();
-                        IT2.Text = DetailList.projectColl[i].ProjectName;
-                        TreeViewDet.Items.Add(IT2);
-                        ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
+                        ComboBoxProekt.Items.Add(itemP.ProjectName);
+                        TreeViewItem ITProekt = new TreeViewItem();
+                        ITProekt.Header = itemP.ProjectName;
+                        TreeViewDet.Items.Add(ITProekt);
                     }
                     break;
                 case "Графики":
-                    if (CheckBoxTreeViewSet.IsChecked == false)
+                    ComboBoxProekt.Items.Clear();
+                    ComboBoxName.Items.Clear();
+                    foreach (Project itemP in State.projectColl)
                     {
-                        ComboBoxName.Items.Clear();
-                        for (int i = 0; i < DetailList.graphicsColl.Count; ++i)
+                        ComboBoxProekt.Items.Add(itemP.ProjectName);
+                        TreeViewItem ITProekt = new TreeViewItem();
+                        ITProekt.Header = itemP.ProjectName;
+                        TreeViewDet.Items.Add(ITProekt);
+                        foreach (Graphics itemD in State.graphicsColl.Where(itemD => itemD.ProjectGrap == itemP.ProjectName))
                         {
-                            TextBlock IT2 = new TextBlock();
-                            IT2.Text = DetailList.graphicsColl[i].NameGrap;
-                            TreeViewDet.Items.Add(IT2);
-                            ComboBoxName.Items.Add(DetailList.graphicsColl[i].NameGrap);
-                        }
-                        ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
-                        {
-                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
-                        }
-                    }
-                    else if (CheckBoxTreeViewSet.IsChecked == true)
-                    {
-                        ComboBoxProekt.Items.Clear();
-                        ComboBoxName.Items.Clear();
-                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
-                        {
-                            ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
-                            TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = DetailList.projectColl[i].ProjectName;
-                            TreeViewDet.Items.Add(ITProekt);
-                            for (int j = 0; j < DetailList.graphicsColl.Count; ++j)
-                            {
-                                if (DetailList.graphicsColl[j].ProjectGrap == DetailList.projectColl[i].ProjectName)
-                                {
-                                    TextBlock ITDet = new TextBlock();
-                                    ITDet.Text = DetailList.graphicsColl[j].NameGrap;
-                                    ITProekt.Items.Add(ITDet);
-                                    ComboBoxName.Items.Add(DetailList.graphicsColl[j].NameGrap);
-                                }
-                            }
+                            TextBlock ITDet = new TextBlock();
+                            ITDet.Text = itemD.NameGrap;
+                            ITProekt.Items.Add(ITDet);
+                            ComboBoxName.Items.Add(itemD.NameGrap);
                         }
                     }
                     break;
-                case "Служебные":
+                case "Документы":
 
                     ComboBoxIndex.Items.Clear();
                     ComboBoxName.Items.Clear();
-                    for (int i = 0; i < DetailList.servicesColl.Count; ++i)
+                    foreach (Services item in State.servicesColl)
                     {
                         TextBlock IT2 = new TextBlock();
-                        IT2.Text = DetailList.servicesColl[i].NameServ;
+                        IT2.Text = item.NameServ;
                         TreeViewDet.Items.Add(IT2);
-                        ComboBoxIndex.Items.Add(DetailList.servicesColl[i].NameServ);
+                        ComboBoxIndex.Items.Add(item.NameServ);
                     }
                     break;
                 default: break;
@@ -397,7 +304,7 @@ namespace Fttd
                     }
                     catch { }
                     break;
-                case "Служебные":
+                case "Документы":
                     try
                     {
                         dbaccess.Dbselect("SELECT [nameserv], [dir] FROM [service] WHERE [nameserv] = '" + index + "'");
@@ -406,7 +313,7 @@ namespace Fttd
                             string[] vs = dbaccess.Querydata[i];
                             string fn = "";
                             string tp = "";
-                            if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Служебная"; }
+                            if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Документы"; }
                             coll.Add(new Table() { Name = fn, Type = tp });
                         }
                     }
@@ -425,24 +332,21 @@ namespace Fttd
         /// <returns>Данные детали строкой</returns>
         public string GetNoteDetail(string index)
         {
-            Dbaccess dbaccess = new Dbaccess();
             string x = "";
             switch (TextBlock_type.Text)
             {
                 case "Детали":
                     try
                     {
-                        dbaccess.Dbselect("SELECT [detail_index], [detail_name], [inventory], [number_task], [project], [razrabotal], [data_add] FROM [detail_db] WHERE [detail_index] = '" + index + "'");
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (Detail item in State.detailColl.Where(item => item.Index == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            x = "Деталь: " + vs[1] + "\nИндекс: " + vs[0] + "\nИнв.№ " + vs[2] + "\nПроект: " + vs[4] + "\n№ Задания: " + vs[3] + "\nРазработал: " + vs[5] + "\nДата добавления: " + vs[6];
-                            ComboBoxIndex.Text = vs[0];
-                            ComboBoxName.Text = vs[1];
-                            ComboBoxNPU.Text = vs[2];
-                            ComboBoxZad.Text = vs[3];
-                            ComboBoxProekt.Text = vs[4];
-                            ComboBoxRazrab.Text = vs[5];
+                            x = item.ToString();
+                            ComboBoxIndex.Text = item.Index;
+                            ComboBoxName.Text = item.DetailName;
+                            ComboBoxNPU.Text = Convert.ToString(item.Inventory);
+                            ComboBoxZad.Text = item.Task;
+                            ComboBoxProekt.Text = item.Project;
+                            ComboBoxRazrab.Text = item.Developer;
                         }
                         return x;
                     }
@@ -453,14 +357,12 @@ namespace Fttd
                 case "Приспособления":
                     try
                     {
-                        dbaccess.Dbselect("SELECT [indexdev], [namedev], [razrab], [data_add] FROM [device] WHERE [indexdev] = '" + index + "'");
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (Device item in State.deviceColl.Where(item => item.DeviceIndex == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            x = "Приспособление: " + vs[1] + "\nИндекс: " + vs[0] + "\nРазработал: " + vs[2] + "\nДата добавления: " + vs[3];
-                            ComboBoxIndex.Text = vs[0];
-                            ComboBoxName.Text = vs[1];
-                            ComboBoxRazrab.Text = vs[2];
+                            x = item.ToString();
+                            ComboBoxIndex.Text = item.DeviceIndex;
+                            ComboBoxName.Text = item.DeviceName;
+                            ComboBoxRazrab.Text = item.DeviceDeveloper;
                         }
                         return x;
                     }
@@ -471,26 +373,14 @@ namespace Fttd
                 case "Задания":
                     try
                     {
-                        dbaccess.Dbselect("SELECT [task], [project], [iscurrent], [datein], [dateout] FROM [task] WHERE [task] = '" + index + "'");
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (TaskDet item in State.taskColl.Where(item => item.TaskName == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            string current = "Нет";
-                            if (vs[2] == "True") { chTaskIsCurrent.IsChecked = true; current = "Да"; }
-                            DateTime dateTime1 = new DateTime();
-                            DateTime dateTime2 = new DateTime();
-                            try
-                            {
-                                dateTime1 = DateTime.Parse(vs[3]);
-                                dateTime2 = DateTime.Parse(vs[4]);
-                                x = "Задание: " + vs[0] + "\nПроект: " + vs[1] + "\nАктуальное: " + current + "\nДата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\nВыполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
-                                data1.SelectedDate = dateTime1;
-                                data2.SelectedDate = dateTime2;
-                            }
-                            catch { }
-                            ComboBoxZad.Text = vs[0];
-                            ComboBoxProekt.Text = vs[1];
-                            x = "Задание: " + vs[0] + "\nПроект: " + vs[1] + "\nАктуальное: " + current + "\nДата выдачи: " + dateTime1.Date.ToString("dd.MM.yy") + "\nВыполнить до: " + dateTime2.Date.ToString("dd.MM.yy");
+                            x = item.ToString();
+                            ComboBoxZad.Text = item.TaskName;
+                            ComboBoxProekt.Text = item.ProjectTaskName;
+                            data1.SelectedDate = item.TaskDateIn;
+                            data2.SelectedDate = item.TaskDateOut;
+                            if (item.TaskIsCurrent) chTaskIsCurrent.IsChecked = true;
                         }
                         return x;
                     }
@@ -504,13 +394,11 @@ namespace Fttd
                 case "Графики":
                     try
                     {
-                        dbaccess.Dbselect("SELECT [namegrap], [project], [data_add] FROM [graphics] WHERE [namegrap] = '" + index + "'");
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (Graphics item in State.graphicsColl.Where(item => item.NameGrap == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            x = "График: " + vs[0] + "\nПроект: " + vs[1] + "\nДата добавления: " + vs[2];
-                            ComboBoxName.Text = vs[0];
-                            ComboBoxProekt.Text = vs[1];
+                            x = item.ToString();
+                            ComboBoxName.Text = item.NameGrap;
+                            ComboBoxProekt.Text = item.ProjectGrap;
                         }
                         return x;
                     }
@@ -518,16 +406,14 @@ namespace Fttd
                     {
                         return x;
                     }
-                case "Служебные":
+                case "Документы":
                     try
                     {
-                        dbaccess.Dbselect("SELECT [nameserv], [note], [data_add] FROM [service] WHERE [nameserv] = '" + index + "'");
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (Services item in State.servicesColl.Where(item => item.NameServ == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            x = "Служебная: " + vs[0] + "\nКороткое описание: " + vs[1] + "\nДата добавления: " + vs[2];
-                            ComboBoxIndex.Text = vs[0];
-                            ComboBoxName.Text = vs[1];
+                            x = item.ToString();
+                            ComboBoxIndex.Text = item.NameServ;
+                            ComboBoxName.Text = item.Note;
                         }
                         return x;
                     }
@@ -616,7 +502,7 @@ namespace Fttd
                         return x;
                     }
                     catch { return x; }
-                case "Служебные":
+                case "Документы":
                     try
                     {
                         dbaccess.Dbselect("SELECT [nameserv], [dir], [note], [data_add] FROM [service] WHERE [nameserv] = '" + index + "'");
@@ -625,7 +511,7 @@ namespace Fttd
                             string[] vs = dbaccess.Querydata[i];
                             string fn = "";
                             string tp = "";
-                            if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Служебная"; }
+                            if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Документы"; }
                             x = "Описание файла\nНазвание файла: " + fn + "\n" + "Тип файла: " + tp + "\n" + "Примечание: " + vs[2] + "\n" + "Дата добавления: " + vs[3];
                         }
                         return x;
@@ -713,7 +599,7 @@ namespace Fttd
                 case "Задания": x = 390; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
-                case "Служебные": x = 280; break;
+                case "Документы": x = 280; break;
                 default: break;
             }
             if (RowDetail.Height.Value == x)
@@ -747,7 +633,7 @@ namespace Fttd
                 case "Задания": x = 390; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
-                case "Служебные": x = 280; break;
+                case "Документы": x = 280; break;
                 default: break;
             }
             if (RowDetail.Height.Value == x)
@@ -785,7 +671,7 @@ namespace Fttd
                 case "Задания": x = 390; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
-                case "Служебные": x = 280; break;
+                case "Документы": x = 280; break;
                 default: break;
             }
             if (RowDetail.Height.Value == x)
@@ -1017,18 +903,18 @@ namespace Fttd
                         }
                         else { MessageBox.Show("Ведите название графика, выберите проект и укажите файл", "Ошибка"); }
                         break;
-                    case "Служебные":
+                    case "Документы":
                         if (ComboBoxIndex.Text != "" && ComboBoxName.Text != "" && TextBoxDirFile.Text != "")
                         {
                             if (ComboBoxIndex.Items.Contains(ComboBoxIndex.Text))
                             {
-                                MessageBox.Show("Укажите новую служебную", "Ошибка");
+                                MessageBox.Show("Укажите новый документ", "Ошибка");
                             }
                             else
                             {
                                 try
                                 {
-                                    AllFiles file = new AllFiles("Служебные", TextBoxDirFile.Text);
+                                    AllFiles file = new AllFiles("Документы", TextBoxDirFile.Text);
                                     if (File.Exists(file.File_dir_in))
                                     {
                                         MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
@@ -1042,7 +928,7 @@ namespace Fttd
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
                         }
-                        else { MessageBox.Show("Ведите номер служебной, краткое описание и укажите файл", "Ошибка"); }
+                        else { MessageBox.Show("Ведите номер документа, краткое описание и укажите файл", "Ошибка"); }
                         break;
                     default: break;
                 }
@@ -1077,16 +963,16 @@ namespace Fttd
                     case "Графики":
                         if (ComboBoxName.Text != "")
                         {
-                            dbaccess.DbRead("UPDATE [graphics] SET [project] = '" + ComboBoxProekt.Text + "', [dir] = '" + TextBoxDirFile.Text + "' WHERE [namegrap] = '" + ComboBoxName.Text + "'");
+                            dbaccess.DbRead("UPDATE [graphics] SET [project] = '" + ComboBoxProekt.Text + "' WHERE [namegrap] = '" + ComboBoxName.Text + "'");
                         }
                         else { MessageBox.Show("Выберите график", "Ошибка"); }
                         break;
-                    case "Служебные":
+                    case "Документы":
                         if (ComboBoxIndex.Text != "")
                         {
-                            dbaccess.DbRead("UPDATE [service] SET [note] = '" + ComboBoxName.Text + "', [dir] = '" + TextBoxDirFile.Text + "' WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
+                            dbaccess.DbRead("UPDATE [service] SET [note] = '" + ComboBoxName.Text + "' WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
                         }
-                        else { MessageBox.Show("Выберите служебную", "Ошибка"); }
+                        else { MessageBox.Show("Выберите документ", "Ошибка"); }
                         break;
                     default: break;
                 }
@@ -1121,34 +1007,24 @@ namespace Fttd
                     case "Графики":
                         if (ComboBoxName.Text != "")
                         {
-                            dbaccess.DbRead("DELETE FROM [graphics] WHERE [namegrap] = '" + ComboBoxName.Text + "'");
                             try
                             {
-                                foreach (Graphics item in DetailList.graphicsColl)
-                                {
-                                    if (item.NameGrap.Contains(ComboBoxName.Text))
-                                    {
-                                        File.Delete(@"" + Param_in.DirFiles + "\\" + item.DirGrap + ""); MessageBox.Show("Файл успешно удалён.", "Удаление");
-                                    }
-                                }
+                                File.Delete(@"" + Param_in.DirFiles + "\\" + State.graphicsColl.First(item => item.NameGrap.Contains(ComboBoxName.Text)).DirGrap + "");
+                                MessageBox.Show("Файл успешно удалён.", "Удаление");
+                                dbaccess.DbRead("DELETE FROM [graphics] WHERE [namegrap] = '" + ComboBoxName.Text + "'");
                             }
                             catch { }
                         }
                         else { MessageBox.Show("Выберите график", "Ошибка"); }
                         break;
-                    case "Служебные":
+                    case "Документы":
                         if (ComboBoxIndex.Text != "")
                         {
-                            foreach (Services item in DetailList.servicesColl)
-                            {
-                                if (item.NameServ.Contains(ComboBoxIndex.Text))
-                                {
-                                    File.Delete(@"" + Param_in.DirFiles + "\\" + item.DirServ + ""); MessageBox.Show("Файл успешно удалён.", "Удаление");
-                                }
-                            }
+                            File.Delete(@"" + Param_in.DirFiles + "\\" + State.servicesColl.First(item => item.NameServ.Contains(ComboBoxIndex.Text)).DirServ + "");
+                            MessageBox.Show("Файл успешно удалён.", "Удаление");
                             dbaccess.DbRead("DELETE FROM [service] WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
                         }
-                        else { MessageBox.Show("Выберите служебную", "Ошибка"); }
+                        else { MessageBox.Show("Выберите документ", "Ошибка"); }
                         break;
                     default: break;
                 }
@@ -1325,14 +1201,7 @@ namespace Fttd
                     case "Задания":
                         try
                         {
-                            string dir = "";
-                            foreach (TaskDet item in DetailList.taskColl)
-                            {
-                                if (item.TaskDir.Contains(textDataGrid))
-                                {
-                                    dir = item.TaskDir;
-                                }
-                            }
+                            string dir = State.taskColl.First(item => item.TaskDir.Contains(textDataGrid)).TaskDir;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
                             Process.Start(@"" + Param_in.DirFiles + dir + "");
                         }
@@ -1341,30 +1210,16 @@ namespace Fttd
                     case "Графики":
                         try
                         {
-                            string dir = "";
-                            foreach (Graphics item in DetailList.graphicsColl)
-                            {
-                                if (item.DirGrap.Contains(textDataGrid))
-                                {
-                                    dir = item.DirGrap;
-                                }
-                            }
+                            string dir = State.graphicsColl.First(item => item.DirGrap.Contains(textDataGrid)).DirGrap;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
                             Process.Start(@"" + Param_in.DirFiles + dir + "");
                         }
                         catch { }
                         break;
-                    case "Служебные":
+                    case "Документы":
                         try
                         {
-                            string dir = "";
-                            foreach (Services item in DetailList.servicesColl)
-                            {
-                                if (item.DirServ.Contains(textDataGrid))
-                                {
-                                    dir = item.DirServ;
-                                }
-                            }
+                            string dir = State.servicesColl.First(item => item.DirServ.Contains(textDataGrid)).DirServ;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
                             Process.Start(@"" + Param_in.DirFiles + dir + "");
                         }
@@ -1374,26 +1229,6 @@ namespace Fttd
                 }
             }
             catch { }
-        }
-
-        // Чекбокс отображения меню включен(отображение по проектам) 
-        private void CheckBoxTreeViewSet_Checked(object sender, RoutedEventArgs e)
-        {
-            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            var entry = config.AppSettings.Settings["CheckBoxTreeViewSet"];
-            if (entry == null) config.AppSettings.Settings.Add("CheckBoxTreeViewSet", "true");
-            else config.AppSettings.Settings["CheckBoxTreeViewSet"].Value = "true";
-            config.Save(ConfigurationSaveMode.Modified);
-        }
-
-        // Чекбокс отображения меню выключен(отображение по деталям) 
-        private void CheckBoxTreeViewSet_Unchecked(object sender, RoutedEventArgs e)
-        {
-            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            var entry = config.AppSettings.Settings["CheckBoxTreeViewSet"];
-            if (entry == null) config.AppSettings.Settings.Add("CheckBoxTreeViewSet", "false");
-            else config.AppSettings.Settings["CheckBoxTreeViewSet"].Value = "false";
-            config.Save(ConfigurationSaveMode.Modified);
         }
 
         // Действие при выборе пункта "Задание" в меню добавление файла
@@ -1423,21 +1258,9 @@ namespace Fttd
         // Действие при выборе номера задания в меню добавление файла (пункт "задание")
         private void ComboBoxTask_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            string task = ComboBoxTask.SelectedItem.ToString();
-            Dbaccess dbaccess = new Dbaccess();
-            dbaccess.Dbselect("SELECT [task], [dir] FROM [task] WHERE [task] = '" + task + "'");
-            for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-            {
-                string[] vs = dbaccess.Querydata[i];
-                TextBoxFiles.Text = (vs[1]);
-                if (TextBoxFiles.Text != "") TextBoxNameFiles.Text = new DirectoryInfo(vs[1]).Name;
-            }
-        }
-
-        //Действие при изменении чекбокса в настройках отображения по проектам
-        private void CheckBoxTreeViewSet_Click(object sender, RoutedEventArgs e)
-        {
-            TreeviewSet();
+            TextBoxFiles.Text = State.taskColl.First(item => item.TaskName.Contains(ComboBoxTask.SelectedItem.ToString())).TaskDir;
+            if (TextBoxFiles.Text != "") TextBoxNameFiles.Text =
+                new DirectoryInfo(State.taskColl.First(item => item.TaskName.Contains(ComboBoxTask.SelectedItem.ToString())).TaskDir).Name;
         }
 
         //Кнопка отображения деталей
@@ -1556,13 +1379,13 @@ namespace Fttd
             ButtonRemoveDetail.IsEnabled = true;
         }
 
-        //Кнопка отображения служебных
+        //Кнопка отображения документов
         private void Button_service_Click(object sender, RoutedEventArgs e)
         {
-            TextBlock_type.Text = "Служебные";
+            TextBlock_type.Text = "Документы";
             TreeviewSet();
             int[] a = { 60, 60, 0, 0, 0, 0, 60, 0, 0, 60 };
-            string[] b = { "Добавить служебную", "Изменить служебную", "Удалить служебную", "Номер служебной", "Короткое описание", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            string[] b = { "Добавить документ", "Изменить документ", "Удалить документ", "Номер документа", "Короткое описание", "Задание", "Проект", "№ Плана управления", "Разработал" };
             ReadAddPanel(a, b);
             DataGridFiles.ItemsSource = null;
             DataGridFiles.Items.Refresh();
@@ -1606,7 +1429,7 @@ namespace Fttd
             TextBlockRazrab.Text = b[8];
         }
 
-        // Кнопка добавления директории файла в меню добавления задания\служебной\графиков
+        // Кнопка добавления директории файла в меню добавления задания\документов\графиков
         private void ButtonAddFile_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFile = new OpenFileDialog();
@@ -1645,70 +1468,51 @@ namespace Fttd
                 switch (TextBlock_type.Text)
                 {
                     case "Детали":
-                        for (int i = 0; i < DetailList.detailColl.Count; ++i)
+                        foreach (Detail item in State.detailColl.Where(item => item.DetailName.Contains(TextBox_Search.Text) || item.Index.Contains(TextBox_Search.Text)))
                         {
-                            if (DetailList.detailColl[i].DetailName.Contains(TextBox_Search.Text) || DetailList.detailColl[i].Index.Contains(TextBox_Search.Text))
-                            {
-                                TextBlock IT2 = new TextBlock();
-                                IT2.Text = DetailList.detailColl[i].DetailName + '|' + DetailList.detailColl[i].Index;
-                                TreeViewDet.Items.Add(IT2);
-                            }
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.DetailName + '|' + item.Index;
+                            TreeViewDet.Items.Add(IT2);
                         }
                         break;
                     case "Приспособления":
-                        for (int i = 0; i < DetailList.deviceColl.Count; ++i)
+                        foreach (Device item in State.deviceColl.Where(item => item.DeviceIndex.Contains(TextBox_Search.Text) || item.DeviceName.Contains(TextBox_Search.Text)))
                         {
-                            if (DetailList.deviceColl[i].DeviceIndex.Contains(TextBox_Search.Text))
-                            {
-                                TextBlock IT2 = new TextBlock();
-                                IT2.Text = DetailList.deviceColl[i].DeviceIndex;
-                                TreeViewDet.Items.Add(IT2);
-                            }
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.DeviceIndex;
+                            TreeViewDet.Items.Add(IT2);
                         }
                         break;
                     case "Задания":
-                        for (int i = 0; i < DetailList.taskColl.Count; ++i)
+                        foreach (TaskDet item in State.taskColl.Where(item => item.TaskName.Contains(TextBox_Search.Text)))
                         {
-                            if (DetailList.taskColl[i].TaskName.Contains(TextBox_Search.Text))
-                            {
-                                TextBlock IT2 = new TextBlock();
-                                IT2.Text = DetailList.taskColl[i].TaskName;
-                                TreeViewDet.Items.Add(IT2);
-                            }
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.TaskName;
+                            TreeViewDet.Items.Add(IT2);
                         }
                         break;
                     case "Проекты":
-                        for (int i = 0; i < DetailList.projectColl.Count; ++i)
+                        foreach (Project item in State.projectColl.Where(item => item.ProjectName.Contains(TextBox_Search.Text)))
                         {
-                            if (DetailList.projectColl[i].ProjectName.Contains(TextBox_Search.Text))
-                            {
-                                TextBlock IT2 = new TextBlock();
-                                IT2.Text = DetailList.projectColl[i].ProjectName;
-                                TreeViewDet.Items.Add(IT2);
-                                ComboBoxProekt.Items.Add(DetailList.projectColl[i].ProjectName);
-                            }
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.ProjectName;
+                            TreeViewDet.Items.Add(IT2);
                         }
                         break;
                     case "Графики":
-                        for (int i = 0; i < DetailList.graphicsColl.Count; ++i)
+                        foreach (Graphics item in State.graphicsColl.Where(item => item.NameGrap.Contains(TextBox_Search.Text)))
                         {
-                            if (DetailList.graphicsColl[i].NameGrap.Contains(TextBox_Search.Text))
-                            {
-                                TextBlock IT2 = new TextBlock();
-                                IT2.Text = DetailList.graphicsColl[i].NameGrap;
-                                TreeViewDet.Items.Add(IT2);
-                            }
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.NameGrap;
+                            TreeViewDet.Items.Add(IT2);
                         }
                         break;
-                    case "Служебные":
-                        for (int i = 0; i < DetailList.servicesColl.Count; ++i)
+                    case "Документы":
+                        foreach (Services item in State.servicesColl.Where(item => item.NameServ.Contains(TextBox_Search.Text)))
                         {
-                            if (DetailList.servicesColl[i].NameServ.Contains(TextBox_Search.Text))
-                            {
-                                TextBlock IT2 = new TextBlock();
-                                IT2.Text = DetailList.servicesColl[i].NameServ;
-                                TreeViewDet.Items.Add(IT2);
-                            }
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.NameServ;
+                            TreeViewDet.Items.Add(IT2);
                         }
                         break;
                     default: break;

@@ -33,7 +33,7 @@ namespace Fttd
 
         public override string ToString()
         {
-            string description = "Инвентарный номер: "+Convert.ToString(Inventory) +"\nИндекс детали: "+ Index + "\nНазвание детали: "+ DetailName + "\nПроект: "+ Project + "\nРазработал: "+ Developer + "\nЗадание: "+ Task + "\nДата добавления: "+ DataAdd;
+            string description = "Деталь: " + DetailName + "\nИндекс: " + Index + "\nИнв.№ " + Convert.ToString(Inventory) + "\nПроект: " + Project + "\n№ Задания: " + Task + "\nРазработал: " + Developer + "\nДата добавления: " + DataAdd;
             return description;
         }
     }

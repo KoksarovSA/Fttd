@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -17,29 +19,19 @@ namespace Fttd
         public Window1()
         {
             InitializeComponent();
-            Dbaccess dbaccess = new Dbaccess();
-            dbaccess.Dbselect("SELECT [task], [project], [dir], [note], [iscurrent], [datein], [dateout] FROM [task] WHERE [iscurrent] = True ORDER BY [datein]");
-            List<Tasken> zad = new List<Tasken>();
-            for (int j = 0; j < dbaccess.Querydata.Count; ++j)
-            {
-                string[] vs = dbaccess.Querydata[j];
-                bool a = Convert.ToBoolean(vs[4]);
-                DateTime b = DateTime.Parse(vs[5]);
-                DateTime c = DateTime.Parse(vs[6]);
-                Tasken tasken = new Tasken(vs[0], vs[1], vs[2], vs[3], a, b, c);
-                zad.Add(tasken);
-            }
-            gr.Children.Add(CreateGrid(60, zad));
+            Collection<TaskDet> ts = new Collection<TaskDet>();
+            foreach (var item in State.taskColl.Where(item => item.TaskIsCurrent == true).OrderBy(item => item.TaskDateIn)) { ts.Add(item); }
+            gr.Children.Add(CreateGrid(60, ts));
         }
-       
-        public Grid CreateGrid(int col, List<Tasken> tasks)
+
+        internal Grid CreateGrid(int col, Collection<TaskDet> tasks)
         {
             Grid daytask = new Grid() { ShowGridLines = false };
             for (int i = 0; i < col; ++i)
             {
                 daytask.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(40) });
             }
-            for (int i = 0; i < tasks.Count+1; ++i)
+            for (int i = 0; i < tasks.Count + 1; ++i)
             {
                 daytask.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(40) });
             }
@@ -59,7 +51,7 @@ namespace Fttd
                 daytask.Children.Add(border);
                 Grid.SetRow(border, 0);
                 Grid.SetColumn(border, i);
-                for (int j = 0; j < tasks.Count+1; j++)
+                for (int j = 0; j < tasks.Count + 1; j++)
                 {
                     Border border1 = new Border();
                     border1.BorderBrush = (Brush)bc1.ConvertFrom("#FF000000");
@@ -72,7 +64,7 @@ namespace Fttd
 
             for (int i = 0; i < tasks.Count; ++i)
             {
-                if (tasks[i].Dateout < DateTime.Now || tasks[i].Days <= 0)
+                if (tasks[i].TaskDateOut < DateTime.Now || tasks[i].Days <= 0)
                 {
                     Rectangle rectangle = new Rectangle();
                     rectangle.Width = 80 - 6;
@@ -81,7 +73,7 @@ namespace Fttd
                     rectangle.HorizontalAlignment = HorizontalAlignment.Left;
                     rectangle.RadiusX = 10;
                     rectangle.RadiusY = 10;
-                    BrushConverter bc = new BrushConverter();                   
+                    BrushConverter bc = new BrushConverter();
                     rectangle.Fill = (Brush)bc.ConvertFrom("#FFD64E48");
                     rectangle.Stroke = (Brush)bc.ConvertFrom("#FF9C9C9C");
                     rectangle.Margin = new Thickness(3, 0, 0, 0);
@@ -89,20 +81,20 @@ namespace Fttd
                     tbRectangle.VerticalAlignment = VerticalAlignment.Center;
                     tbRectangle.HorizontalAlignment = HorizontalAlignment.Left;
                     tbRectangle.Foreground = (Brush)bc.ConvertFrom("#FFFFFFFF");
-                    tbRectangle.Text = "   " + tasks[i].Tasks;
+                    tbRectangle.Text = "   " + tasks[i].TaskName;
                     tbRectangle.AddHandler(TextBlock.MouseLeftButtonUpEvent, new RoutedEventHandler(Element_Click));
                     tbRectangle.AddHandler(TextBlock.MouseRightButtonUpEvent, new RoutedEventHandler(Element_MouseRightClick));
                     ToolTip tool = new ToolTip();
                     ToolTipService.SetShowDuration(rectangle, 60000);
-                    ToolTipService.SetPlacement(rectangle, System.Windows.Controls.Primitives.PlacementMode.Mouse);                    
-                    tool.Content = "Задание: " + tasks[i].Tasks + "\nПроект: " + tasks[i].Project + "\nДата выдачи: " + tasks[i].Datein.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].Dateout.ToString("dd.MM.yy") + "\nПрошло " + Math.Abs(tasks[i].Days).ToString() + " " + DeyOverDeys(tasks[i].Days) + " после\nокончания срока ";                   
+                    ToolTipService.SetPlacement(rectangle, System.Windows.Controls.Primitives.PlacementMode.Mouse);
+                    tool.Content = "Задание: " + tasks[i].TaskName + "\nПроект: " + tasks[i].ProjectTaskName + "\nДата выдачи: " + tasks[i].TaskDateIn.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].TaskDateOut.ToString("dd.MM.yy") + "\nПрошло " + Math.Abs(tasks[i].Days).ToString() + " " + DeyOverDeys(tasks[i].Days) + " после\nокончания срока ";
                     rectangle.ToolTip = tool;
                     daytask.Children.Add(rectangle);
                     daytask.Children.Add(tbRectangle);
-                    Grid.SetRow(rectangle, i+1);
+                    Grid.SetRow(rectangle, i + 1);
                     Grid.SetColumn(rectangle, 0);
                     Grid.SetColumnSpan(rectangle, 2);
-                    Grid.SetRow(tbRectangle, i+1);
+                    Grid.SetRow(tbRectangle, i + 1);
                     Grid.SetColumn(tbRectangle, 0);
                     Grid.SetColumnSpan(tbRectangle, 2);
                 }
@@ -124,20 +116,20 @@ namespace Fttd
                     tbRectangle.VerticalAlignment = VerticalAlignment.Center;
                     tbRectangle.HorizontalAlignment = HorizontalAlignment.Left;
                     tbRectangle.Foreground = (Brush)bc.ConvertFrom("#FFFFFFFF");
-                    tbRectangle.Text = "   " + tasks[i].Tasks;
+                    tbRectangle.Text = "   " + tasks[i].TaskName;
                     tbRectangle.AddHandler(TextBlock.MouseLeftButtonUpEvent, new RoutedEventHandler(Element_Click));
                     tbRectangle.AddHandler(TextBlock.MouseRightButtonUpEvent, new RoutedEventHandler(Element_MouseRightClick));
                     ToolTip tool = new ToolTip();
                     ToolTipService.SetShowDuration(rectangle, 60000);
                     ToolTipService.SetPlacement(rectangle, System.Windows.Controls.Primitives.PlacementMode.Mouse);
-                    tool.Content = "Задание: " + tasks[i].Tasks + "\nПроект: " + tasks[i].Project + "\nДата выдачи: " + tasks[i].Datein.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].Dateout.ToString("dd.MM.yy") + "\nОсталось " + (tasks[i].Days + 2).ToString() + " " + DeyOverDeys(tasks[i].Days + 2);
+                    tool.Content = "Задание: " + tasks[i].TaskName + "\nПроект: " + tasks[i].ProjectTaskName + "\nДата выдачи: " + tasks[i].TaskDateIn.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].TaskDateOut.ToString("dd.MM.yy") + "\nОсталось " + (tasks[i].Days + 2).ToString() + " " + DeyOverDeys(tasks[i].Days + 2);
                     rectangle.ToolTip = tool;
                     daytask.Children.Add(rectangle);
                     daytask.Children.Add(tbRectangle);
-                    Grid.SetRow(rectangle, i+1);
+                    Grid.SetRow(rectangle, i + 1);
                     Grid.SetColumn(rectangle, 0);
                     Grid.SetColumnSpan(rectangle, tasks[i].Days + 2);
-                    Grid.SetRow(tbRectangle, i+1);
+                    Grid.SetRow(tbRectangle, i + 1);
                     Grid.SetColumn(tbRectangle, 0);
                     Grid.SetColumnSpan(tbRectangle, 13);
                 }
@@ -179,7 +171,7 @@ namespace Fttd
                     dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True WHERE [task] = '" + (sender as TextBlock).Text.Trim() + "'");
                 }
             }
-            catch { }            
+            catch { }
         }
 
         private void gridtop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -208,5 +200,5 @@ namespace Fttd
             }
             return x;
         }
-    }       
+    }
 }

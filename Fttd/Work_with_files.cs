@@ -279,35 +279,5 @@ namespace Fttd
             catch (Exception e) { MessageBox.Show("Проверьте правильность запроса." + e, "Ошибка"); }
             con.Close();
         }
-    }
-    /// <summary>
-    /// Класс для данных задания
-    /// </summary>
-    public class Tasken
-    {
-        public string Tasks { get; set; }
-        public string Project { get; set; }
-        public string Dir { get; set; }
-        public string Note { get; set; }
-        public bool Iscurrent { get; set; }
-        public DateTime Datein { get; set; }
-        public DateTime Dateout { get; set; }
-        public int Days { get; set; }
-
-        public Tasken(string tasks, string project, string dir, string note, bool iscurrent, DateTime datein, DateTime dateout)
-        {
-            Tasks = tasks;
-            Project = project;
-            Dir = dir;
-            Note = note;
-            Iscurrent = iscurrent;
-            Datein = datein;
-            Dateout = dateout;
-            Days = (Dateout - DateTime.Now).Days;
-        }
-
-        public Tasken()
-        {
-        }
-    }    
+    }   
 }

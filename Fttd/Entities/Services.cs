@@ -19,7 +19,7 @@ namespace Fttd.Entities
             Note = note ?? throw new ArgumentNullException(nameof(note));
             DateAddServ = DateTime.Parse(dateAddServ);
         }
-
+        
         public string NameServ { get; set; }
         public string DirServ { get; set; }
         public string Note { get; set; }
@@ -27,7 +27,7 @@ namespace Fttd.Entities
 
         public override string ToString()
         {
-            string description = "Название служебной: " + NameServ + "\nДиректория служебной: " + DirServ + "\nПримечание: " + Note + "\nДата добавления: " + Convert.ToString(DateAddServ);
+            string description = "Документ: " + NameServ + "\nКороткое описание: " + Note + "\nДата добавления: " + Convert.ToString(DateAddServ);
             return description;
         }
 

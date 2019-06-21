@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Fttd
 {
@@ -53,7 +49,7 @@ namespace Fttd
 
         public override string ToString()
         {
-            string description = "Номер задания: " + TaskName + "\nПроект: " + ProjectTaskName + "\nДиректория задания: " + TaskDir + "\nПримечание: " + TaskNote + "\nАктуальность задания: " + Actuality + "\nДата добавления: " + Convert.ToString(TaskDateIn) + "\nДата окончания: " + Convert.ToString(TaskDateOut);
+            string description = "Задание: " + TaskName + "\nПроект: " + ProjectTaskName + "\nАктуальность: " + Actuality + "\nДата выдачи: " + TaskDateIn.Date.ToString("dd.MM.yy") + "\nВыполнить до: " + TaskDateOut.Date.ToString("dd.MM.yy");
             return description;
         }
     }

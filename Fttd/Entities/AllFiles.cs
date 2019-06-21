@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Fttd.Entities
 {
@@ -35,15 +32,7 @@ namespace Fttd.Entities
         {
             get
             {
-                string pr = null;
-                foreach (Detail item in DetailList.detailColl)
-                {
-                    if (item.Index == Detail_index)
-                    {
-                        pr = item.Project;
-                        break;
-                    }
-                }
+                string pr = State.detailColl.First(item => item.Index == Detail_index).Project ?? null;
                 return pr;
             }
         }
@@ -65,7 +54,7 @@ namespace Fttd.Entities
                 {
                     case "Задания": dir = @"" + Param_in.DirFiles + "\\" + Project + "\\" + File_type + "\\" + File_name; break;
                     case "Графики": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
-                    case "Служебные": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
+                    case "Документы": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
                     case "Приспособления": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + Detail_index + "\\" + File_name; break;
                     default:
                         {
@@ -89,7 +78,7 @@ namespace Fttd.Entities
                 {
                     case "Задания": dir = @"\\" + Project + "\\" + File_type + "\\" + File_name; break;
                     case "Графики": dir = @"\\" + File_type + "\\" + File_name; break;
-                    case "Служебные": dir = @"\\" + File_type + "\\" + File_name; break;
+                    case "Документы": dir = @"\\" + File_type + "\\" + File_name; break;
                     case "Приспособления": dir = @"\\" + File_type + "\\" + Detail_index + "\\" + File_name; break;
                     default:
                         {

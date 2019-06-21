@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -13,7 +14,7 @@ namespace Fttd
         public Window2()
         {
             InitializeComponent();
-            DataGridTechnology.ItemsSource = DetailList.detailColl;
+            DataGridTechnology.ItemsSource = State.detailColl.OrderByDescending(item => item.Inventory);
             DataGridTechnology.Items.Refresh();
         }
 

@@ -87,7 +87,6 @@
     </ApplicationDefinition>
     <Compile Include="Entities\AllFiles.cs" />
     <Compile Include="Entities\Detail.cs" />
-    <Compile Include="Entities\DetailList.cs" />
     <Compile Include="Entities\Developer.cs" />
     <Compile Include="Entities\Device.cs" />
     <Compile Include="Entities\Graphics.cs" />

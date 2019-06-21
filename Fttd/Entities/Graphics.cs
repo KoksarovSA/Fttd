@@ -27,7 +27,7 @@ namespace Fttd.Entities
 
         public override string ToString()
         {
-            string description = "Название графика: " + NameGrap + "\nПроект: " + ProjectGrap + "\nДиректория графика: " + DirGrap + "\nДата добавления: " + DateAddGrap;
+            string description = "График: " + NameGrap + "\nПроект: " + ProjectGrap + "\nДата добавления: " + DateAddGrap;
             return description;
         }
     }

@@ -27,7 +27,7 @@ namespace Fttd
 
         public override string ToString()
         {
-            string description = "Индекс детали: " + DeviceIndex + "\nНазвание детали: " + DeviceName + "\nРазработал: " + DeviceDeveloper + "\nДата добавления: " + DataAdd;
+            string description = "Приспособление: " + DeviceName + "\nИндекс: " + DeviceIndex + "\nРазработал: " + DeviceDeveloper + "\nДата добавления: " + DataAdd;
             return description;
         }
     }

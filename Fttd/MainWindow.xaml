@@ -39,10 +39,10 @@
                             <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30"/>
                         </Button>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
+                    <!--<StackPanel Orientation="Horizontal">
                         <CheckBox Name="CheckBoxTreeViewSet" Style="{StaticResource MaterialDesignSwitchToggleButton}" Margin="10,0,0,0" Checked="CheckBoxTreeViewSet_Checked" Unchecked="CheckBoxTreeViewSet_Unchecked" Click="CheckBoxTreeViewSet_Click" />
                         <TextBlock Text="Отображение по проектам" Foreground="White" Margin="15,5,0,0"/>
-                    </StackPanel>
+                    </StackPanel>-->
                     <TextBlock Text="FTTD v.1.2.0" Foreground="White" Margin="15,5,0,0"/>
                 </StackPanel>
             </Grid>
@@ -236,10 +236,10 @@
                                 <TextBlock Text="Графики" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
-                                <Button Name="Button_service" ToolTip="Служебные" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" BorderBrush="{x:Null}" Margin="0,5,0,0" Click="Button_service_Click" Background="{x:Null}">
+                                <Button Name="Button_service" ToolTip="Документы" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" BorderBrush="{x:Null}" Margin="0,5,0,0" Click="Button_service_Click" Background="{x:Null}">
                                     <materialDesign:PackIcon Kind="FileChart" Width="30" Height="30"/>
                                 </Button>
-                                <TextBlock Text="Служебные" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                <TextBlock Text="Документы" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
                             </StackPanel>
                         </StackPanel>
                     </Grid>
