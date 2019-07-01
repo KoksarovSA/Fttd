@@ -34,13 +34,7 @@
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="50"/>
                 </Grid.RowDefinitions>
-                <ListView Name="ChatBox" Grid.Row="0" Background="#FF7AB9D1" Foreground="#DDFFFFFF" FontWeight="Bold" Padding="10" FontSize="16">
-                    <ListView.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="Copy" Click="MenuItemCopy_Click"/>
-                        </ContextMenu>
-                    </ListView.ContextMenu>
-                </ListView>
+                <ListView Name="ChatBox" Grid.Row="0" Background="#FF7AB9D1" Foreground="#DDFFFFFF" FontWeight="Bold" Padding="10" FontSize="16" />
                 <Grid Grid.Row="1" Grid.ColumnSpan="3">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="40"/>

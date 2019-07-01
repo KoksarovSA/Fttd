@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Fttd.Entities;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -18,9 +19,29 @@ namespace Fttd
         public Window1()
         {
             InitializeComponent();
+            TaskEmployeeUpdate();           
+            gr.Children.Add(CreateGrid(60, OutputTask()));
+        }
+
+        private void TaskEmployeeUpdate()
+        {
+            TaskEmployee.Items.Clear();
+            foreach (Employees item in State.employeeColl.OrderBy(item => item.LastName).Where(item => item.ShortName != "Нет" && item.ShortName != "Системное сообщение"))
+            {
+                TaskEmployee.Items.Add(item.ShortName);
+            }
+            TaskEmployee.Text = State.employee.ShortName;
+        }
+
+        private Collection<TaskDet> OutputTask()
+        {
             Collection<TaskDet> ts = new Collection<TaskDet>();
-            foreach (var item in State.taskColl.Where(item => item.TaskIsCurrent == true).OrderBy(item => item.TaskDateIn)) { ts.Add(item); }
-            gr.Children.Add(CreateGrid(60, ts));
+            switch (TaskEmployee.SelectedItem)
+            {
+                case "Все": foreach (var item in State.taskColl.Where(item => item.TaskIsCurrent == true).OrderBy(item => item.TaskDateIn)) { ts.Add(item); }; break;               
+                default: foreach (var item in State.taskColl.Where(item => item.TaskIsCurrent == true && item.Leading == Convert.ToString(TaskEmployee.SelectedItem)).OrderBy(item => item.TaskDateIn)) { ts.Add(item); }; break;
+            }
+            return ts;
         }
 
         internal Grid CreateGrid(int col, Collection<TaskDet> tasks)
@@ -198,6 +219,12 @@ namespace Fttd
                 default: break;
             }
             return x;
+        }
+
+        private void TaskEmployee_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            gr.Children.Clear();
+            gr.Children.Add(CreateGrid(60, OutputTask()));
         }
     }
 }

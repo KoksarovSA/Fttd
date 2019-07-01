@@ -136,6 +136,35 @@ namespace Fttd
         /// Метод добавляющий данные из базы данных в список 
         /// </summary>
         /// <param name="query">Запрос к базе данных</param>
+        public void Db2select(string query = "")
+        {
+            OleDbConnection con1 = new OleDbConnection();
+            try
+            {
+                querydata.Clear();
+                con1.ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Param_in.DirDb + ";Jet OLEDB:Database Password=derpassword";
+                con1.Open();
+                OleDbCommand cmd1 = new OleDbCommand();
+                cmd1.Connection = con1;
+                cmd1.CommandText = "" + query + "";
+                OleDbDataReader reader1 = cmd1.ExecuteReader();
+                while (reader1.Read())
+                {
+                    string[] vs = new string[reader1.FieldCount];
+                    for (int i = 0; i < reader1.FieldCount; ++i)
+                    { vs[i] = reader1[i].ToString(); }
+                    querydata.Add(vs);
+                }
+
+            }
+            catch (Exception e) { MessageBox.Show("Проверьте правильность запроса." + e, "Ошибка"); }
+            con1.Close();
+        }
+
+        /// <summary>
+        /// Метод добавляющий данные из базы данных в список 
+        /// </summary>
+        /// <param name="query">Запрос к базе данных</param>
         public void Dbselect(string query = "")
         {
             OleDbConnection con = new OleDbConnection();

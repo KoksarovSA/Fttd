@@ -36,7 +36,7 @@ namespace Fttd
                 TextBoxBD.Text = Param_in.DirDb;
                 TextBoxDir.Text = Param_in.DirFiles;
                 State.BackupFTTDDB();
-
+                CheckTask();
             }
             catch (Exception e) { MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
         }
@@ -66,6 +66,19 @@ namespace Fttd
             timer.AutoReset = true;
         }
 
+        private void CheckTask()
+        {
+            Dbaccess dbaccess = new Dbaccess();
+            dbaccess.DbRead("DELETE * FROM [chat] WHERE [FromEmployee] = 'Системное сообщение' AND [WhereEmployee] = '" + State.employee.ShortName + "' AND [Message] LIKE 'Задание%'");
+            foreach (TaskDet item in State.taskColl.Where(item => item.TaskIsCurrent == true && item.Leading == State.employee.ShortName))
+            {
+                string message = "Задание №" + item.TaskName + " выполнить до " + item.TaskDateOut.ToString();
+                dbaccess.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'Системное сообщение', '" + State.employee.ShortName + "', '" + Convert.ToString(DateTime.Now) + "', '" + message + "'");
+            }
+            if (State.UpdateMessageColl()) { Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen); } 
+            FillChatBox();            
+        }
+
         private void SendChatBox()
         {
             Dbaccess dbaccess = new Dbaccess();
@@ -79,21 +92,34 @@ namespace Fttd
             ChatBox.Items.Clear();
             foreach (Message item in State.messageColl.OrderBy(item => item.TimeMess))
             {
-                TextBlock text = new TextBlock();
-                text.Text = item.ToString();
-                ChatBox.Items.Add(text);
-                ChatBox.ScrollIntoView(text);
-            }
+                StackPanel panel = new StackPanel();
+                panel.Orientation = Orientation.Horizontal;
+                TextBlock date = new TextBlock() { Text = item.TimeMess.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.Gold) };           
+                TextBlock from = new TextBlock() { Text = item.FromEmployee.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.YellowGreen) };
+                TextBlock to = new TextBlock() { Text = " =>  ", VerticalAlignment = VerticalAlignment.Center };
+                TextBlock where = new TextBlock() { Text = item.WhereEmployee.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.YellowGreen) };
+                TextBlock x = new TextBlock() { Text = ": ", Foreground = new SolidColorBrush(Colors.YellowGreen), VerticalAlignment = VerticalAlignment.Center };
+                TextBox message = new TextBox() { Text = item.Mess.ToString(), IsReadOnly = true, BorderThickness = new Thickness(0, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+                panel.Children.Add(date);
+                panel.Children.Add(from);
+                panel.Children.Add(to);
+                panel.Children.Add(where);
+                panel.Children.Add(x);
+                panel.Children.Add(message);
+                ChatBox.Items.Add(panel);
+                ChatBox.ScrollIntoView(panel);
+            };
         }
+    
 
         private void WhereEmployeeUpdate()
         {
             WhereEmployee.Items.Clear();
-            foreach (Employees item in State.employeeColl.OrderBy(item => item.LastName).Where(item => item.ShortName != "Нет"))
+            foreach (Employees item in State.employeeColl.OrderBy(item => item.LastName).Where(item => item.ShortName != "Нет" && item.ShortName != "Системное сообщение"))
             {
                 WhereEmployee.Items.Add(item.ShortName);
             }
-            WhereEmployee.Text = "Всем";
+            WhereEmployee.Text = "Все";
         }
 
         /// <summary>
@@ -1595,11 +1621,6 @@ namespace Fttd
         private void RegistryTask_Click(object sender, RoutedEventArgs e)
         {
             Process.Start(@"\\Ts-03\users\OGK\Реестр Заданий\РЕЕСТР ЗАДАНИЙ.xlsx");
-        }
-
-        private void MenuItemCopy_Click(object sender, RoutedEventArgs e)
-        {
-            Clipboard.SetText((ChatBox.SelectedItem as TextBlock).Text);
         }
 
         private void Send_Click(object sender, RoutedEventArgs e)

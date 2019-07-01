@@ -15,6 +15,7 @@
             </Grid.RowDefinitions>
             <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Left" Margin="10,0,0,0">
                 <TextBlock Text="Актуальные задания" VerticalAlignment="Center" FontSize="22" Foreground="White" FontWeight="Bold"/>
+                <ComboBox Name="TaskEmployee" Width="200" Margin="10,0,0,0" Foreground="White" FontSize="22" SelectionChanged="TaskEmployee_SelectionChanged" FontWeight="Bold" BorderThickness="0"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" Margin="0,0,10,0">
                 <Button Name="ButtonExit" ToolTip="Выход" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonExit_Click">

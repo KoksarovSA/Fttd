@@ -27,7 +27,7 @@ namespace Fttd
         public static void UpdateEmployee()
         {
             Dbaccess dbaccess = new Dbaccess();
-            dbaccess.Dbselect("SELECT [Firstname], [Lastname], [Patronymic], [Shortname], [Ip], [Position], [Access], [Tabel] FROM [employees] WHERE [Ip] = '" + Dns.GetHostByName(Dns.GetHostName()).AddressList[0].ToString() + "'");
+            dbaccess.Dbselect("SELECT [Firstname], [Lastname], [Patronymic], [Shortname], [Ip], [Position], [Access], [Tabel] FROM [employees] WHERE [Ip] = '" + Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].ToString() + "'");
             for (int i = 0; i < dbaccess.Querydata.Count; i++)
             {
                 string[] vs = dbaccess.Querydata[i];
@@ -46,7 +46,7 @@ namespace Fttd
             bool result;
             int count = messageColl.Count;
             Dbaccess dbaccess2 = new Dbaccess();
-            dbaccess2.Dbselect("SELECT [FromEmployee], [WhereEmployee], [DateTime], [Message] FROM [chat] WHERE [FromEmployee] = '" + employee.ShortName + "' OR [FromEmployee] = 'Всем' OR [WhereEmployee] = '" + employee.ShortName + "'");
+            dbaccess2.Db2select("SELECT [FromEmployee], [WhereEmployee], [DateTime], [Message] FROM [chat] WHERE [FromEmployee] = '" + employee.ShortName + "' OR [FromEmployee] = 'Всем' OR [WhereEmployee] = '" + employee.ShortName + "'");
             if (count != dbaccess2.Querydata.Count)
             {
                 messageColl.Clear();
