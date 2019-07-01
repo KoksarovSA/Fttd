@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Fttd
 {
@@ -36,5 +32,7 @@ namespace Fttd
             string description = "Деталь: " + DetailName + "\nИндекс: " + Index + "\nИнв.№ " + Convert.ToString(Inventory) + "\nПроект: " + Project + "\n№ Задания: " + Task + "\nРазработал: " + Developer + "\nДата добавления: " + DataAdd;
             return description;
         }
+
+        
     }
 }

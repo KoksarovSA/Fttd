@@ -2,14 +2,13 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using WinForms = System.Windows.Forms;
 
 namespace Fttd
@@ -26,14 +25,75 @@ namespace Fttd
             {
                 Param_in.GetDirDB();
                 Param_in.GetDirFiles();
+                State.UpdateEmployee();
+                State.UpdateMessageColl();
+                FillChatBox();
+                WhereEmployeeUpdate();
+                UpdateChatBox();
                 State.stateTreeView = true;
                 State.UpdateDataTreeView();
                 TreeviewSet();
                 TextBoxBD.Text = Param_in.DirDb;
                 TextBoxDir.Text = Param_in.DirFiles;
                 State.BackupFTTDDB();
+
             }
             catch (Exception e) { MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
+        }
+
+        internal void UpdateChatBox()
+        {
+            System.Timers.Timer timer = new System.Timers.Timer(10000);
+            timer.Enabled = true;
+            try
+            {
+                timer.Elapsed += new System.Timers.ElapsedEventHandler((object source, System.Timers.ElapsedEventArgs e) =>
+                {
+                    timer.Stop();
+                    if (State.UpdateMessageColl())
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen);
+                            FillChatBox();
+                        });
+                        timer.Start();
+                    }
+                    else timer.Start();
+                });
+            }
+            catch (Exception) { timer.Start(); }
+            timer.AutoReset = true;
+        }
+
+        private void SendChatBox()
+        {
+            Dbaccess dbaccess = new Dbaccess();
+            dbaccess.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'" + State.employee.ShortName + "', '" + WhereEmployee.Text + "', '" + Convert.ToString(DateTime.Now) + "', '" + ChatString.Text + "'");
+            State.UpdateMessageColl();
+            FillChatBox();
+        }
+
+        internal void FillChatBox()
+        {
+            ChatBox.Items.Clear();
+            foreach (Message item in State.messageColl.OrderBy(item => item.TimeMess))
+            {
+                TextBlock text = new TextBlock();
+                text.Text = item.ToString();
+                ChatBox.Items.Add(text);
+                ChatBox.ScrollIntoView(text);
+            }
+        }
+
+        private void WhereEmployeeUpdate()
+        {
+            WhereEmployee.Items.Clear();
+            foreach (Employees item in State.employeeColl.OrderBy(item => item.LastName).Where(item => item.ShortName != "Нет"))
+            {
+                WhereEmployee.Items.Add(item.ShortName);
+            }
+            WhereEmployee.Text = "Всем";
         }
 
         /// <summary>
@@ -159,7 +219,7 @@ namespace Fttd
                             ComboBoxZad.Items.Add(itemD.TaskName);
                             ComboBoxTask.Items.Add(itemD.TaskName);
                         }
-                    }                   
+                    }
                     break;
                 case "Проекты":
                     ComboBoxProekt.Items.Clear();
@@ -378,6 +438,7 @@ namespace Fttd
                             x = item.ToString();
                             ComboBoxZad.Text = item.TaskName;
                             ComboBoxProekt.Text = item.ProjectTaskName;
+                            ComboBoxRazrab.Text = item.Leading;
                             data1.SelectedDate = item.TaskDateIn;
                             data2.SelectedDate = item.TaskDateOut;
                             if (item.TaskIsCurrent) chTaskIsCurrent.IsChecked = true;
@@ -558,7 +619,7 @@ namespace Fttd
             Param_in.SetDirDB(dir);
             MessageBox.Show("После изменения файла базы данных приложение будет перезапущено.", "Изменение файла базы данных");
             this.Close();
-            System.Diagnostics.Process.Start(@"Fttd.exe");
+            Process.Start(@"Fttd.exe");
         }
 
         // Кнопка в настройках добавления базовой директории
@@ -596,7 +657,7 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 390; break;
+                case "Задания": x = 450; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
                 case "Документы": x = 280; break;
@@ -630,7 +691,7 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 390; break;
+                case "Задания": x = 450; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
                 case "Документы": x = 280; break;
@@ -668,7 +729,7 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 390; break;
+                case "Задания": x = 450; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
                 case "Документы": x = 280; break;
@@ -828,7 +889,7 @@ namespace Fttd
                         {
                             if (ComboBoxZad.Items.Contains(ComboBoxZad.Text))
                             {
-                                MessageBox.Show("Задание уже есть в базе, будет изменена только актуальность и добавлен файл", "Ошибка");
+                                MessageBox.Show("Задание уже есть в базе, будет изменена только актуальность, ответственный и добавлен файл", "Ошибка");
                                 if (TextBoxDirFile.Text != "")
                                 {
                                     try
@@ -842,12 +903,14 @@ namespace Fttd
                                         {
                                             file.Copy_file();
                                         }
-                                        dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True, [dir] = '" + file.File_dir_in_short + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
+                                        dbaccess.DbRead("UPDATE [task] SET [dir] = '" + file.File_dir_in_short + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
                                     }
                                     catch { }
                                 }
-                                if (chTaskIsCurrent.IsChecked == true) { dbaccess.DbRead("UPDATE [task] SET [iscurrent] = True WHERE [task] = '" + ComboBoxZad.Text + "'"); }
-                                else { dbaccess.DbRead("UPDATE [task] SET [iscurrent] = False WHERE [task] = '" + ComboBoxZad.Text + "'"); }
+                                string leading;
+                                try { leading = State.employeeColl.First(item => item.ShortName.Contains(ComboBoxRazrab.Text)).ShortName; }
+                                catch (Exception) { leading = "Нет"; }
+                                dbaccess.DbRead("UPDATE [task] SET [iscurrent] = " + chTaskIsCurrent.IsChecked.Value + ", [leading] = '" + leading + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
                             }
                             else
                             {
@@ -862,7 +925,12 @@ namespace Fttd
                                     {
                                         file.Copy_file();
                                     }
-                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + file.File_dir_in_short + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
+                                    string leading;
+                                    try { leading = State.employeeColl.First(item => item.ShortName.Contains(ComboBoxRazrab.Text)).ShortName; }
+                                    catch (Exception) { leading = "Нет"; }
+                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent], [leading]) VALUES " +
+                                        "('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + file.File_dir_in_short + "', '" + data1.Text + "', '" + data2.Text + "', " +
+                                        chTaskIsCurrent.IsChecked.Value + ", '" + leading + "')");
                                 }
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
@@ -956,7 +1024,7 @@ namespace Fttd
                     case "Приспособления":
                         if (ComboBoxIndex.Text != "")
                         {
-                            dbaccess.DbRead("UPDATE [device] SET [namedev] = '" + ComboBoxName.Text + "', [razrabotal] = '" + ComboBoxRazrab.Text + "' WHERE [indexdev] = '" + ComboBoxIndex.Text + "'");
+                            dbaccess.DbRead("UPDATE [device] SET [namedev] = '" + ComboBoxName.Text + "', [razrab] = '" + ComboBoxRazrab.Text + "' WHERE [indexdev] = '" + ComboBoxIndex.Text + "'");
                         }
                         else { MessageBox.Show("Ведите название приспособления", "Ошибка"); }
                         break;
@@ -1278,7 +1346,7 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = true;
             ButtonReadFiles.IsEnabled = true;
             ButtonRemoveFiles.IsEnabled = true;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
             RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
@@ -1300,7 +1368,7 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = true;
             ButtonReadFiles.IsEnabled = true;
             ButtonRemoveFiles.IsEnabled = true;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
             RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
@@ -1314,8 +1382,8 @@ namespace Fttd
         {
             TextBlock_type.Text = "Задания";
             TreeviewSet();
-            int[] a = { 0, 0, 60, 60, 0, 0, 60, 80, 30, 60 };
-            string[] b = { "Добавить задание", "Изменить задание", "Удалить задание", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            int[] a = { 0, 0, 60, 60, 0, 60, 60, 80, 30, 60 };
+            string[] b = { "Добавить задание", "Изменить задание", "Удалить задание", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Ответственный" };
             ReadAddPanel(a, b);
             ComboBoxProekt.IsEditable = false;
             ComboBoxZad.IsEditable = true;
@@ -1324,7 +1392,7 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
             RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
@@ -1347,7 +1415,7 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
             RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
@@ -1370,7 +1438,7 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
             RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
@@ -1392,7 +1460,7 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
             RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
@@ -1458,6 +1526,9 @@ namespace Fttd
         {
             State.stateTreeView = true;
             TreeviewSet();
+            State.UpdateMessageColl();
+            ChatBox.Items.Clear();
+            FillChatBox();
         }
 
         private void TextBox_Search_KeyUp(object sender, KeyEventArgs e)
@@ -1519,6 +1590,49 @@ namespace Fttd
                 }
             }
             else { TreeviewSet(); }
+        }
+
+        private void RegistryTask_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(@"\\Ts-03\users\OGK\Реестр Заданий\РЕЕСТР ЗАДАНИЙ.xlsx");
+        }
+
+        private void MenuItemCopy_Click(object sender, RoutedEventArgs e)
+        {
+            Clipboard.SetText((ChatBox.SelectedItem as TextBlock).Text);
+        }
+
+        private void Send_Click(object sender, RoutedEventArgs e)
+        {
+            if (ChatString.Text != "" && ChatString.Text != null)
+            {
+                SendChatBox();
+                ChatString.Clear();
+            }
+        }
+
+        private void ChatString_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                if (ChatString.Text != "" && ChatString.Text != null)
+                {
+                    SendChatBox();
+                    ChatString.Clear();
+                }
+            }
+        }
+
+        private void Chat_expand_Click(object sender, RoutedEventArgs e)
+        {
+            if (RowChat.Height != new GridLength(value: 300, type: GridUnitType.Pixel))
+            {
+                RowChat.Height = new GridLength(value: 300, type: GridUnitType.Pixel);
+            }
+            else RowChat.Height = new GridLength(value: 50, type: GridUnitType.Pixel);
+            State.UpdateMessageColl();
+            FillChatBox();
+            Chat_expand.Foreground = new SolidColorBrush(Colors.White);
         }
     }
 }

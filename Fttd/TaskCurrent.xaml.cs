@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -87,7 +86,7 @@ namespace Fttd
                     ToolTip tool = new ToolTip();
                     ToolTipService.SetShowDuration(rectangle, 60000);
                     ToolTipService.SetPlacement(rectangle, System.Windows.Controls.Primitives.PlacementMode.Mouse);
-                    tool.Content = "Задание: " + tasks[i].TaskName + "\nПроект: " + tasks[i].ProjectTaskName + "\nДата выдачи: " + tasks[i].TaskDateIn.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].TaskDateOut.ToString("dd.MM.yy") + "\nПрошло " + Math.Abs(tasks[i].Days).ToString() + " " + DeyOverDeys(tasks[i].Days) + " после\nокончания срока ";
+                    tool.Content = "Задание: " + tasks[i].TaskName + "\nПроект: " + tasks[i].ProjectTaskName + "\nОтветственный: " + tasks[i].Leading + "\nДата выдачи: " + tasks[i].TaskDateIn.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].TaskDateOut.ToString("dd.MM.yy") + "\nПрошло " + Math.Abs(tasks[i].Days).ToString() + " " + DeyOverDeys(tasks[i].Days) + " после\nокончания срока ";
                     rectangle.ToolTip = tool;
                     daytask.Children.Add(rectangle);
                     daytask.Children.Add(tbRectangle);
@@ -122,7 +121,7 @@ namespace Fttd
                     ToolTip tool = new ToolTip();
                     ToolTipService.SetShowDuration(rectangle, 60000);
                     ToolTipService.SetPlacement(rectangle, System.Windows.Controls.Primitives.PlacementMode.Mouse);
-                    tool.Content = "Задание: " + tasks[i].TaskName + "\nПроект: " + tasks[i].ProjectTaskName + "\nДата выдачи: " + tasks[i].TaskDateIn.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].TaskDateOut.ToString("dd.MM.yy") + "\nОсталось " + (tasks[i].Days + 2).ToString() + " " + DeyOverDeys(tasks[i].Days + 2);
+                    tool.Content = "Задание: " + tasks[i].TaskName + "\nПроект: " + tasks[i].ProjectTaskName + "\nОтветственный: " + tasks[i].Leading + "\nДата выдачи: " + tasks[i].TaskDateIn.ToString("dd.MM.yy") + "\nВыполнить до: " + tasks[i].TaskDateOut.ToString("dd.MM.yy") + "\nОсталось " + (tasks[i].Days + 2).ToString() + " " + DeyOverDeys(tasks[i].Days + 2);
                     rectangle.ToolTip = tool;
                     daytask.Children.Add(rectangle);
                     daytask.Children.Add(tbRectangle);

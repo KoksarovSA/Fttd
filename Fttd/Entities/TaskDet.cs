@@ -19,7 +19,7 @@ namespace Fttd
             ProjectTaskName = projectTaskName ?? throw new ArgumentNullException(nameof(projectTaskName));
         }
 
-        public TaskDet(string taskName, string projectTaskName, string taskDir, string taskNote, string taskIsCurrent, string taskDateIn, string taskDateOut)
+        public TaskDet(string taskName, string projectTaskName, string taskDir, string taskNote, string taskIsCurrent, string taskDateIn, string taskDateOut, string leading)
         {
             TaskName = taskName ?? throw new ArgumentNullException(nameof(taskName));
             ProjectTaskName = projectTaskName ?? throw new ArgumentNullException(nameof(projectTaskName));
@@ -29,6 +29,7 @@ namespace Fttd
             if (taskDateIn != "") { TaskDateIn = DateTime.Parse(taskDateIn); }
             if (taskDateOut != "") { TaskDateOut = DateTime.Parse(taskDateOut); }
             Days = (TaskDateOut - DateTime.Now).Days;
+            Leading = leading ?? "Нет";
         }
 
         public string TaskName { get; set; }
@@ -46,10 +47,11 @@ namespace Fttd
             }
         }
         public int Days { get; set; }
+        public string Leading { get; set; }
 
         public override string ToString()
         {
-            string description = "Задание: " + TaskName + "\nПроект: " + ProjectTaskName + "\nАктуальность: " + Actuality + "\nДата выдачи: " + TaskDateIn.Date.ToString("dd.MM.yy") + "\nВыполнить до: " + TaskDateOut.Date.ToString("dd.MM.yy");
+            string description = "Задание: " + TaskName + "\nПроект: " + ProjectTaskName + "\nАктуальность: " + Actuality + "\nОтветственный: " + Leading + "\nДата выдачи: " + TaskDateIn.Date.ToString("dd.MM.yy") + "\nВыполнить до: " + TaskDateOut.Date.ToString("dd.MM.yy");
             return description;
         }
     }

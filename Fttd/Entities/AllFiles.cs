@@ -52,7 +52,7 @@ namespace Fttd.Entities
                 string dir;
                 switch (File_type)
                 {
-                    case "Задания": dir = @"" + Param_in.DirFiles + "\\" + Project + "\\" + File_type + "\\" + File_name; break;
+                    case "Задания": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
                     case "Графики": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
                     case "Документы": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
                     case "Приспособления": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + Detail_index + "\\" + File_name; break;
@@ -76,7 +76,7 @@ namespace Fttd.Entities
                 string dir;
                 switch (File_type)
                 {
-                    case "Задания": dir = @"\\" + Project + "\\" + File_type + "\\" + File_name; break;
+                    case "Задания": dir = @"\\" + File_type + "\\" + File_name; break;
                     case "Графики": dir = @"\\" + File_type + "\\" + File_name; break;
                     case "Документы": dir = @"\\" + File_type + "\\" + File_name; break;
                     case "Приспособления": dir = @"\\" + File_type + "\\" + Detail_index + "\\" + File_name; break;
