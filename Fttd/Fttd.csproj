@@ -91,7 +91,6 @@
     <Compile Include="Entities\Device.cs" />
     <Compile Include="Entities\Employees.cs" />
     <Compile Include="Entities\Graphics.cs" />
-    <Compile Include="Entities\Inventory.cs" />
     <Compile Include="Entities\Message.cs" />
     <Compile Include="Entities\Project.cs" />
     <Compile Include="Entities\Services.cs" />

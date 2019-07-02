@@ -19,18 +19,22 @@ namespace Fttd
         public Window1()
         {
             InitializeComponent();
-            TaskEmployeeUpdate();           
-            gr.Children.Add(CreateGrid(60, OutputTask()));
+            if (TaskEmployeeUpdate()) { gr.Children.Add(CreateGrid(60, OutputTask())); }           
         }
 
-        private void TaskEmployeeUpdate()
+        private bool TaskEmployeeUpdate()
         {
-            TaskEmployee.Items.Clear();
-            foreach (Employees item in State.employeeColl.OrderBy(item => item.LastName).Where(item => item.ShortName != "Нет" && item.ShortName != "Системное сообщение"))
+            if (State.employeeColl != null)
             {
-                TaskEmployee.Items.Add(item.ShortName);
+                TaskEmployee.Items.Clear();
+                foreach (Employees item in State.employeeColl.OrderBy(item => item.LastName).Where(item => item.ShortName != "Нет" && item.ShortName != "Системное сообщение"))
+                {
+                    TaskEmployee.Items.Add(item.ShortName);
+                }
+                TaskEmployee.Text = State.employee.ShortName;
+                return true;
             }
-            TaskEmployee.Text = State.employee.ShortName;
+            else return false;
         }
 
         private Collection<TaskDet> OutputTask()
@@ -38,7 +42,7 @@ namespace Fttd
             Collection<TaskDet> ts = new Collection<TaskDet>();
             switch (TaskEmployee.SelectedItem)
             {
-                case "Все": foreach (var item in State.taskColl.Where(item => item.TaskIsCurrent == true).OrderBy(item => item.TaskDateIn)) { ts.Add(item); }; break;               
+                case "Все": foreach (var item in State.taskColl.Where(item => item.TaskIsCurrent == true).OrderBy(item => item.TaskDateIn)) { ts.Add(item); }; break;
                 default: foreach (var item in State.taskColl.Where(item => item.TaskIsCurrent == true && item.Leading == Convert.ToString(TaskEmployee.SelectedItem)).OrderBy(item => item.TaskDateIn)) { ts.Add(item); }; break;
             }
             return ts;
@@ -161,13 +165,8 @@ namespace Fttd
         {
             try
             {
-                Dbaccess dbaccess = new Dbaccess();
-                dbaccess.Dbselect("SELECT [dir], [task] FROM [task] WHERE [task] = '" + (sender as TextBlock).Text.Trim() + "'");
-                for (int j = 0; j < dbaccess.Querydata.Count; ++j)
-                {
-                    string[] vs = dbaccess.Querydata[j];
-                    Process.Start(@"" + Param_in.DirFiles + "\\" + vs[0] + "");
-                }
+                if (State.employeeColl != null) Process.Start(@"" + Param_in.DirFiles + "\\" + State.taskColl.First(item => item.TaskIsCurrent == true && 
+                item.TaskName.Contains((sender as TextBlock).Text.Trim())).TaskDir + "");
             }
             catch { MessageBox.Show("Файл не привязан к заданию", "Ошибка"); }
         }
@@ -224,7 +223,7 @@ namespace Fttd
         private void TaskEmployee_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             gr.Children.Clear();
-            gr.Children.Add(CreateGrid(60, OutputTask()));
+            if (State.taskColl != null) { gr.Children.Add(CreateGrid(60, OutputTask())); }
         }
     }
 }

@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace Fttd.Entities
 {
+    /// <summary>
+    /// Тип данных для всех файлов
+    /// </summary>
     class AllFiles
     {
         public AllFiles()

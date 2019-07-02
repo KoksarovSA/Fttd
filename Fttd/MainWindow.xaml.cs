@@ -29,7 +29,7 @@ namespace Fttd
                 State.UpdateMessageColl();
                 FillChatBox();
                 WhereEmployeeUpdate();
-                UpdateChatBox();
+                UpdateChatBox(10000);
                 State.stateTreeView = true;
                 State.UpdateDataTreeView();
                 TreeviewSet();
@@ -41,9 +41,12 @@ namespace Fttd
             catch (Exception e) { MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
         }
 
-        internal void UpdateChatBox()
+        /// <summary>
+        /// Метоз запускает проверку новых сообщений по таймеру
+        /// </summary>
+        internal void UpdateChatBox(int timems)
         {
-            System.Timers.Timer timer = new System.Timers.Timer(10000);
+            System.Timers.Timer timer = new System.Timers.Timer(timems);
             timer.Enabled = true;
             try
             {
@@ -54,9 +57,9 @@ namespace Fttd
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen);
+                            Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen); 
                             FillChatBox();
-                        });
+                        }); // Меняет цвет иконки сообщения и обновляет чат в основном потоке
                         timer.Start();
                     }
                     else timer.Start();
@@ -66,19 +69,27 @@ namespace Fttd
             timer.AutoReset = true;
         }
 
+        /// <summary>
+        /// Метод отправляет системное сообщение если у сотрудника есть отслеживаемые актуальные задания
+        /// </summary>
         private void CheckTask()
         {
-            Dbaccess dbaccess = new Dbaccess();
-            dbaccess.DbRead("DELETE * FROM [chat] WHERE [FromEmployee] = 'Системное сообщение' AND [WhereEmployee] = '" + State.employee.ShortName + "' AND [Message] LIKE 'Задание%'");
-            foreach (TaskDet item in State.taskColl.Where(item => item.TaskIsCurrent == true && item.Leading == State.employee.ShortName))
+            Dbaccess dbaccess1 = new Dbaccess();
+            dbaccess1.DbRead("DELETE * FROM [chat] WHERE [FromEmployee] = 'Системное сообщение' AND [WhereEmployee] = '" + State.employee.ShortName + "' AND [Message] LIKE 'Задание%'");
+            if (State.taskColl != null)
             {
-                string message = "Задание №" + item.TaskName + " выполнить до " + item.TaskDateOut.ToString();
-                dbaccess.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'Системное сообщение', '" + State.employee.ShortName + "', '" + Convert.ToString(DateTime.Now) + "', '" + message + "'");
+                foreach (TaskDet item in State.taskColl.Where(item => item.TaskIsCurrent == true && item.Leading == State.employee.ShortName))
+                {
+                    string message = "Задание №" + item.TaskName + " выполнить до " + item.TaskDateOut.ToString();
+                    dbaccess1.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'Системное сообщение', '" + State.employee.ShortName + "', '" + Convert.ToString(DateTime.Now) + "', '" + message + "'");
+                }
+                if (State.UpdateMessageColl()) { Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen); FillChatBox(); }
             }
-            if (State.UpdateMessageColl()) { Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen); } 
-            FillChatBox();            
         }
 
+        /// <summary>
+        /// Метод отправляет сообщения в БД и обновляет чат
+        /// </summary>
         private void SendChatBox()
         {
             Dbaccess dbaccess = new Dbaccess();
@@ -87,14 +98,18 @@ namespace Fttd
             FillChatBox();
         }
 
+        /// <summary>
+        /// Метод обновляет чат
+        /// </summary>
         internal void FillChatBox()
         {
             ChatBox.Items.Clear();
+
             foreach (Message item in State.messageColl.OrderBy(item => item.TimeMess))
             {
                 StackPanel panel = new StackPanel();
                 panel.Orientation = Orientation.Horizontal;
-                TextBlock date = new TextBlock() { Text = item.TimeMess.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.Gold) };           
+                TextBlock date = new TextBlock() { Text = item.TimeMess.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.Gold) };
                 TextBlock from = new TextBlock() { Text = item.FromEmployee.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.YellowGreen) };
                 TextBlock to = new TextBlock() { Text = " =>  ", VerticalAlignment = VerticalAlignment.Center };
                 TextBlock where = new TextBlock() { Text = item.WhereEmployee.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.YellowGreen) };
@@ -110,8 +125,10 @@ namespace Fttd
                 ChatBox.ScrollIntoView(panel);
             };
         }
-    
 
+        /// <summary>
+        /// Метод заполняющий комбобокс кому отправить сообщение
+        /// </summary>
         private void WhereEmployeeUpdate()
         {
             WhereEmployee.Items.Clear();
@@ -205,9 +222,9 @@ namespace Fttd
                         ComboBoxRazrab.Items.Add(item.DeveloperName);
                     }
                     ComboBoxNPU.Items.Clear();
-                    foreach (Inventory item in State.inventoryColl.OrderByDescending(item => item.InventoryNom))
+                    foreach (Detail item in State.detailColl.OrderByDescending(item => item.Inventory))
                     {
-                        ComboBoxNPU.Items.Add(item.InventoryNom);
+                        ComboBoxNPU.Items.Add(item.Inventory);
                     }
                     break;
                 case "Приспособления":

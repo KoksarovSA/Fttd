@@ -10,37 +10,37 @@ namespace Fttd
 {
     internal static class State
     {
-        internal static bool stateTreeView;
-        internal static Employees employee;
+        internal static bool stateTreeView; //Нуждаются ли коллекции в обновлении из БД
+        internal static Employees employee; //Сотрудник запустивший приложение
+        internal static Collection<Detail> detailColl = new Collection<Detail>(); //Коллекция деталей
+        internal static Collection<TaskDet> taskColl = new Collection<TaskDet>(); //Коллекция заданий
+        internal static Collection<Project> projectColl = new Collection<Project>(); //Коллекция проектов
+        internal static Collection<Developer> developerColl = new Collection<Developer>(); //Коллекция разработчиков технологий
+        internal static Collection<Device> deviceColl = new Collection<Device>(); //Коллекция приспособлений
+        internal static Collection<Graphics> graphicsColl = new Collection<Graphics>(); //Коллекция графиков
+        internal static Collection<Services> servicesColl = new Collection<Services>(); //Коллекция документов
+        internal static Collection<Message> messageColl = new Collection<Message>(); //Коллекция сообщений чата
+        internal static Collection<Employees> employeeColl = new Collection<Employees>(); //Коллекция сотрудников
 
-        internal static Collection<Detail> detailColl = new Collection<Detail>();
-        internal static Collection<TaskDet> taskColl = new Collection<TaskDet>();
-        internal static Collection<Project> projectColl = new Collection<Project>();
-        internal static Collection<Developer> developerColl = new Collection<Developer>();
-        internal static Collection<Inventory> inventoryColl = new Collection<Inventory>();
-        internal static Collection<Device> deviceColl = new Collection<Device>();
-        internal static Collection<Graphics> graphicsColl = new Collection<Graphics>();
-        internal static Collection<Services> servicesColl = new Collection<Services>();
-        internal static Collection<Message> messageColl = new Collection<Message>();
-        internal static Collection<Employees> employeeColl = new Collection<Employees>();
-
+        /// <summary>
+        /// Метод определяет и заполняет сотрудника запустившего приложение и заполняет коллекцию сотрудников из БД 
+        /// </summary>
         public static void UpdateEmployee()
         {
-            Dbaccess dbaccess = new Dbaccess();
-            dbaccess.Dbselect("SELECT [Firstname], [Lastname], [Patronymic], [Shortname], [Ip], [Position], [Access], [Tabel] FROM [employees] WHERE [Ip] = '" + Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].ToString() + "'");
-            for (int i = 0; i < dbaccess.Querydata.Count; i++)
-            {
-                string[] vs = dbaccess.Querydata[i];
-                employee = new Employees(vs[0], vs[1], vs[2], vs[3], vs[4], vs[5], Convert.ToInt16(vs[6]), Convert.ToInt16(vs[7]));
-            }
+            Dbaccess dbaccess = new Dbaccess();           
             dbaccess.Dbselect("SELECT [Firstname], [Lastname], [Patronymic], [Shortname], [Ip], [Position], [Access], [Tabel] FROM [employees]");
             for (int i = 0; i < dbaccess.Querydata.Count; i++)
             {
                 string[] vs = dbaccess.Querydata[i];
                 employeeColl.Add(new Employees(vs[0], vs[1], vs[2], vs[3], vs[4], vs[5], Convert.ToInt16(vs[6]), Convert.ToInt16(vs[7])));
             }
+            if (employeeColl != null) { employee = employeeColl.First(item => item.Ip == Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].ToString()); }
         }
 
+        /// <summary>
+        /// Метод обновляет коллекцию сообщений
+        /// </summary>
+        /// <returns>Возвращает true если появились новые сообщения</returns>
         public static bool UpdateMessageColl()
         {
             bool result;
@@ -61,6 +61,9 @@ namespace Fttd
             return result;
         }
 
+        /// <summary>
+        /// Метод обновляет коллекции сущностей из БД
+        /// </summary>
         public static void UpdateDataTreeView()
         {
             Dbaccess dbaccess = new Dbaccess();
@@ -72,11 +75,8 @@ namespace Fttd
                 string[] vs = dbaccess.Querydata[i];
                 detailColl.Add(new Detail(vs[2], vs[0], vs[1], vs[4], vs[3], vs[5], vs[6]));
                 developerColl.Add(new Developer(vs[3]));
-                inventoryColl.Add(new Inventory(Convert.ToDouble(vs[2])));
             }
-            developerColl.Distinct();
-            developerColl.GroupBy(developerColl => developerColl.DeveloperName);
-            inventoryColl.GroupBy(inventoryColl => inventoryColl.InventoryNom);
+            developerColl.Distinct().GroupBy(developerColl => developerColl.DeveloperName);
             dbaccess.Dbselect("SELECT [task], [project], [dir], [note], [iscurrent], [datein], [dateout], [leading] FROM [task] ORDER BY [task]");
             taskColl.Clear();
             for (int i = 0; i < dbaccess.Querydata.Count; i++)
@@ -112,6 +112,7 @@ namespace Fttd
                 string[] vs = dbaccess.Querydata[i];
                 servicesColl.Add(new Services(vs[0], vs[1], vs[2], vs[3]));
             }
+            stateTreeView = false;
         }
 
         /// <summary>

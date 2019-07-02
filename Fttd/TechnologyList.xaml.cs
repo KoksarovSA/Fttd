@@ -13,8 +13,7 @@ namespace Fttd
         public Window2()
         {
             InitializeComponent();
-            DataGridTechnology.ItemsSource = State.detailColl.OrderByDescending(item => item.Inventory);
-            DataGridTechnology.Items.Refresh();
+            if (State.detailColl != null) { DataGridTechnology.ItemsSource = State.detailColl.OrderByDescending(item => item.Inventory); }
         }
 
         private void gridtop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -27,6 +26,5 @@ namespace Fttd
         {
             this.Close();
         }
-
     }
 }

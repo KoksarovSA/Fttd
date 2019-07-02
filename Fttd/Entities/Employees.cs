@@ -28,7 +28,5 @@ namespace Fttd.Entities
         public string Position { get; set; }
         public int Access { get; set; }
         public int Tabel { get; set; }
-
-
     }
 }
