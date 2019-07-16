@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Fttd
+namespace Fttd.Entities
 {
     internal class Detail
     {
@@ -31,8 +31,6 @@ namespace Fttd
         {
             string description = "Деталь: " + DetailName + "\nИндекс: " + Index + "\nИнв.№ " + Convert.ToString(Inventory) + "\nПроект: " + Project + "\n№ Задания: " + Task + "\nРазработал: " + Developer + "\nДата добавления: " + DataAdd;
             return description;
-        }
-
-        
+        }       
     }
 }

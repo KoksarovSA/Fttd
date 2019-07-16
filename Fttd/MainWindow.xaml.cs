@@ -23,27 +23,26 @@ namespace Fttd
             InitializeComponent();
             try
             {
-                Param_in.GetDirDB();
-                Param_in.GetDirFiles();
-                State.UpdateEmployee();
-                State.UpdateMessageColl();
-                FillChatBox();
-                WhereEmployeeUpdate();
-                UpdateChatBox();
+                State.BackupFTTDDB();
+                TextBoxBD.Text = State.DirDb;
+                TextBoxDir.Text = State.DirFiles;
                 State.stateTreeView = true;
                 State.UpdateDataTreeView();
                 TreeviewSet();
-                TextBoxBD.Text = Param_in.DirDb;
-                TextBoxDir.Text = Param_in.DirFiles;
-                State.BackupFTTDDB();
+                State.UpdateEmployee();
+                WhereEmployeeUpdate();
                 CheckTask();
+                UpdateChatBox(60000);
             }
             catch (Exception e) { MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
         }
 
-        internal void UpdateChatBox()
+        /// <summary>
+        /// Метоз запускает проверку новых сообщений по таймеру
+        /// </summary>
+        internal void UpdateChatBox(int timems)
         {
-            System.Timers.Timer timer = new System.Timers.Timer(10000);
+            System.Timers.Timer timer = new System.Timers.Timer(timems);
             timer.Enabled = true;
             try
             {
@@ -54,9 +53,9 @@ namespace Fttd
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen);
+                            Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen); 
                             FillChatBox();
-                        });
+                        }); // Меняет цвет иконки сообщения и обновляет чат в основном потоке
                         timer.Start();
                     }
                     else timer.Start();
@@ -66,19 +65,26 @@ namespace Fttd
             timer.AutoReset = true;
         }
 
+        /// <summary>
+        /// Метод отправляет системное сообщение если у сотрудника есть отслеживаемые актуальные задания
+        /// </summary>
         private void CheckTask()
         {
-            Dbaccess dbaccess = new Dbaccess();
-            dbaccess.DbRead("DELETE * FROM [chat] WHERE [FromEmployee] = 'Системное сообщение' AND [WhereEmployee] = '" + State.employee.ShortName + "' AND [Message] LIKE 'Задание%'");
-            foreach (TaskDet item in State.taskColl.Where(item => item.TaskIsCurrent == true && item.Leading == State.employee.ShortName))
+            Dbaccess dbaccess1 = new Dbaccess();
+            dbaccess1.DbRead("DELETE * FROM [chat] WHERE [FromEmployee] = 'Системное сообщение' AND [WhereEmployee] = '" + State.employee.ShortName + "' AND [Message] LIKE 'Задание%'");
+            if (State.taskColl != null)
             {
-                string message = "Задание №" + item.TaskName + " выполнить до " + item.TaskDateOut.ToString();
-                dbaccess.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'Системное сообщение', '" + State.employee.ShortName + "', '" + Convert.ToString(DateTime.Now) + "', '" + message + "'");
+                foreach (TaskDet item in State.taskColl.Where(item => item.TaskIsCurrent == true && item.Leading == State.employee.ShortName))
+                {
+                    string message = "Задание №" + item.TaskName + " выполнить до " + item.TaskDateOut.ToString();
+                    dbaccess1.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'Системное сообщение', '" + State.employee.ShortName + "', '" + Convert.ToString(DateTime.Now) + "', '" + message + "'");
+                }
             }
-            if (State.UpdateMessageColl()) { Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen); } 
-            FillChatBox();            
         }
 
+        /// <summary>
+        /// Метод отправляет сообщения в БД и обновляет чат
+        /// </summary>
         private void SendChatBox()
         {
             Dbaccess dbaccess = new Dbaccess();
@@ -87,6 +93,9 @@ namespace Fttd
             FillChatBox();
         }
 
+        /// <summary>
+        /// Метод обновляет чат
+        /// </summary>
         internal void FillChatBox()
         {
             ChatBox.Items.Clear();
@@ -94,7 +103,7 @@ namespace Fttd
             {
                 StackPanel panel = new StackPanel();
                 panel.Orientation = Orientation.Horizontal;
-                TextBlock date = new TextBlock() { Text = item.TimeMess.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.Gold) };           
+                TextBlock date = new TextBlock() { Text = item.TimeMess.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.Gold) };
                 TextBlock from = new TextBlock() { Text = item.FromEmployee.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.YellowGreen) };
                 TextBlock to = new TextBlock() { Text = " =>  ", VerticalAlignment = VerticalAlignment.Center };
                 TextBlock where = new TextBlock() { Text = item.WhereEmployee.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.YellowGreen) };
@@ -110,8 +119,10 @@ namespace Fttd
                 ChatBox.ScrollIntoView(panel);
             };
         }
-    
 
+        /// <summary>
+        /// Метод заполняющий комбобокс кому отправить сообщение
+        /// </summary>
         private void WhereEmployeeUpdate()
         {
             WhereEmployee.Items.Clear();
@@ -205,9 +216,9 @@ namespace Fttd
                         ComboBoxRazrab.Items.Add(item.DeveloperName);
                     }
                     ComboBoxNPU.Items.Clear();
-                    foreach (Inventory item in State.inventoryColl.OrderByDescending(item => item.InventoryNom))
+                    foreach (Detail item in State.detailColl.OrderByDescending(item => item.Inventory))
                     {
-                        ComboBoxNPU.Items.Add(item.InventoryNom);
+                        ComboBoxNPU.Items.Add(item.Inventory);
                     }
                     break;
                 case "Приспособления":
@@ -619,6 +630,11 @@ namespace Fttd
         // Перетаскивание окна
         private void Grid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            if (e.ClickCount == 3)
+            {
+                if (this.WindowState != WindowState.Maximized) this.WindowState = WindowState.Maximized;
+                else this.WindowState = WindowState.Normal;
+            }
             try { this.DragMove(); }
             catch { }
         }
@@ -639,10 +655,8 @@ namespace Fttd
         {
             WinForms.OpenFileDialog openFile = new WinForms.OpenFileDialog();
             openFile.ShowDialog();
-            string dir = openFile.FileName;
-            TextBoxBD.Text = dir;
-            Param_in.DirDb = dir;
-            Param_in.SetDirDB(dir);
+            State.DirDb = openFile.FileName;
+            TextBoxBD.Text = State.DirDb;
             MessageBox.Show("После изменения файла базы данных приложение будет перезапущено.", "Изменение файла базы данных");
             this.Close();
             Process.Start(@"Fttd.exe");
@@ -653,10 +667,8 @@ namespace Fttd
         {
             WinForms.FolderBrowserDialog folder = new WinForms.FolderBrowserDialog();
             folder.ShowDialog();
-            string dir = folder.SelectedPath;
-            TextBoxDir.Text = dir;
-            Param_in.DirFiles = dir;
-            Param_in.SetDirFiles(dir);
+            State.DirFiles = folder.SelectedPath;
+            TextBoxDir.Text = State.DirFiles;
             MessageBox.Show("После изменения базовой директории приложение будет перезапущено.", "Изменение Базовой директории");
             this.Close();
             System.Diagnostics.Process.Start(@"Fttd.exe");
@@ -1103,7 +1115,7 @@ namespace Fttd
                         {
                             try
                             {
-                                File.Delete(@"" + Param_in.DirFiles + "\\" + State.graphicsColl.First(item => item.NameGrap.Contains(ComboBoxName.Text)).DirGrap + "");
+                                File.Delete(@"" + State.DirFiles + "\\" + State.graphicsColl.First(item => item.NameGrap.Contains(ComboBoxName.Text)).DirGrap + "");
                                 MessageBox.Show("Файл успешно удалён.", "Удаление");
                                 dbaccess.DbRead("DELETE FROM [graphics] WHERE [namegrap] = '" + ComboBoxName.Text + "'");
                             }
@@ -1114,7 +1126,7 @@ namespace Fttd
                     case "Документы":
                         if (ComboBoxIndex.Text != "")
                         {
-                            File.Delete(@"" + Param_in.DirFiles + "\\" + State.servicesColl.First(item => item.NameServ.Contains(ComboBoxIndex.Text)).DirServ + "");
+                            File.Delete(@"" + State.DirFiles + "\\" + State.servicesColl.First(item => item.NameServ.Contains(ComboBoxIndex.Text)).DirServ + "");
                             MessageBox.Show("Файл успешно удалён.", "Удаление");
                             dbaccess.DbRead("DELETE FROM [service] WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
                         }
@@ -1242,7 +1254,7 @@ namespace Fttd
                             dbaccess.DbRead("DELETE FROM [stack_files] WHERE [detail_index] = '" + name[1] + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
                             if (ComboBoxTypeFiles.Text == "Задание")
                             { MessageBox.Show("Файл задания может быть привязан к другим деталям. Привязка к данной детали будет удалена.", "Удаление"); }
-                            else { File.Delete(@"" + Param_in.DirFiles + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
+                            else { File.Delete(@"" + State.DirFiles + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
                         }
                         catch { }
                         break;
@@ -1252,7 +1264,7 @@ namespace Fttd
                             dbaccess.DbRead("DELETE FROM [device_files] WHERE [indexdev] = '" + textItem + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
                             if (ComboBoxTypeFiles.Text == "Задание")
                             { MessageBox.Show("Файл задания может быть привязан к другим деталям. Привязка к данной детали будет удалена.", "Удаление"); }
-                            else { File.Delete(@"" + Param_in.DirFiles + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
+                            else { File.Delete(@"" + State.DirFiles + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
                         }
                         catch { }
                         break;
@@ -1280,7 +1292,7 @@ namespace Fttd
                         {
                             string[] name = textItem.Split('|');
                             TextBlockPF.Text = GetNoteFiles(name[1], textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + "\\" + TextBoxFiles.Text + "");
+                            Process.Start(@"" + State.DirFiles + "\\" + TextBoxFiles.Text + "");
                         }
                         catch { }
                         break;
@@ -1288,7 +1300,7 @@ namespace Fttd
                         try
                         {
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + TextBoxFiles.Text + "");
+                            Process.Start(@"" + State.DirFiles + TextBoxFiles.Text + "");
                         }
                         catch { }
                         break;
@@ -1297,7 +1309,7 @@ namespace Fttd
                         {
                             string dir = State.taskColl.First(item => item.TaskDir.Contains(textDataGrid)).TaskDir;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + dir + "");
+                            Process.Start(@"" + State.DirFiles + dir + "");
                         }
                         catch { }
                         break;
@@ -1306,7 +1318,7 @@ namespace Fttd
                         {
                             string dir = State.graphicsColl.First(item => item.DirGrap.Contains(textDataGrid)).DirGrap;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + dir + "");
+                            Process.Start(@"" + State.DirFiles + dir + "");
                         }
                         catch { }
                         break;
@@ -1315,7 +1327,7 @@ namespace Fttd
                         {
                             string dir = State.servicesColl.First(item => item.DirServ.Contains(textDataGrid)).DirServ;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Process.Start(@"" + Param_in.DirFiles + dir + "");
+                            Process.Start(@"" + State.DirFiles + dir + "");
                         }
                         catch { }
                         break;
@@ -1538,8 +1550,8 @@ namespace Fttd
         // Кнопка открытия активных заданий
         private void CurrentTask_Click(object sender, RoutedEventArgs e)
         {
-            Window1 window = new Window1();
-            window.Show();
+            Window1 windowTask = new Window1();
+            windowTask.Show();
         }
 
         private void TechnologyList_Click(object sender, RoutedEventArgs e)

@@ -13,12 +13,16 @@ namespace Fttd
         public Window2()
         {
             InitializeComponent();
-            DataGridTechnology.ItemsSource = State.detailColl.OrderByDescending(item => item.Inventory);
-            DataGridTechnology.Items.Refresh();
+            if (State.detailColl != null) { DataGridTechnology.ItemsSource = State.detailColl.OrderByDescending(item => item.Inventory); }
         }
 
         private void gridtop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            if (e.ClickCount == 3)
+            {
+                if (this.WindowState != WindowState.Maximized) this.WindowState = WindowState.Maximized;
+                else this.WindowState = WindowState.Normal;
+            }
             try { this.DragMove(); }
             catch { }
         }
@@ -27,6 +31,5 @@ namespace Fttd
         {
             this.Close();
         }
-
     }
 }

@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace Fttd.Entities
 {
+    /// <summary>
+    /// Тип данных для всех файлов
+    /// </summary>
     class AllFiles
     {
         public AllFiles()
@@ -52,17 +55,17 @@ namespace Fttd.Entities
                 string dir;
                 switch (File_type)
                 {
-                    case "Задания": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
-                    case "Графики": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
-                    case "Документы": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + File_name; break;
-                    case "Приспособления": dir = @"" + Param_in.DirFiles + "\\" + File_type + "\\" + Detail_index + "\\" + File_name; break;
+                    case "Задания": dir = @"" + State.DirFiles + "\\" + File_type + "\\" + File_name; break;
+                    case "Графики": dir = @"" + State.DirFiles + "\\" + File_type + "\\" + File_name; break;
+                    case "Документы": dir = @"" + State.DirFiles + "\\" + File_type + "\\" + File_name; break;
+                    case "Приспособления": dir = @"" + State.DirFiles + "\\" + File_type + "\\" + Detail_index + "\\" + File_name; break;
                     default:
                         {
                             if (File_dir_out.Contains("Задания"))
                             {
                                 dir = File_dir_out;
                             }
-                            else dir = @"" + Param_in.DirFiles + "\\" + Project + "\\" + Detail_name + "_" + Detail_index + "\\" + File_name;
+                            else dir = @"" + State.DirFiles + "\\" + Project + "\\" + Detail_name + "_" + Detail_index + "\\" + File_name;
                             break;
                         }
                 }

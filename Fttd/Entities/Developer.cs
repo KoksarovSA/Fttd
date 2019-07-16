@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Fttd
+namespace Fttd.Entities
 {
     internal class Developer : IEquatable<Developer>
     {
