@@ -85,6 +85,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AddStateTask.xaml.cs">
+      <DependentUpon>AddStateTask.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Entities\AllFiles.cs" />
     <Compile Include="Entities\Detail.cs" />
     <Compile Include="Entities\Developer.cs" />
@@ -94,6 +97,7 @@
     <Compile Include="Entities\Message.cs" />
     <Compile Include="Entities\Project.cs" />
     <Compile Include="Entities\Services.cs" />
+    <Compile Include="Entities\TaskStatus.cs" />
     <Compile Include="State.cs" />
     <Compile Include="Entities\TaskDet.cs" />
     <Compile Include="TechnologyList.xaml.cs">
@@ -103,6 +107,10 @@
       <DependentUpon>TaskCurrent.xaml</DependentUpon>
     </Compile>
     <Compile Include="Work_with_files.cs" />
+    <Page Include="AddStateTask.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

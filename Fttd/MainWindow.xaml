@@ -173,13 +173,13 @@
                                         <ComboBox Name="ComboBoxRazrab" Foreground="Black" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
                                     </StackPanel>
                                     <StackPanel Grid.Row="6" Orientation="Vertical">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Name="TextBlockData1" Text="Дата выдачи    " Foreground="White" Margin="15,15,0,0"/>
-                                            <DatePicker Name="data1" Width="150" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Foreground="White" BorderBrush="White"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,10">
+                                            <TextBlock Name="TextBlockData1" Text="Дата выдачи    " Foreground="White" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                                            <DatePicker Name="data1" Width="140" Style="{StaticResource MaterialDesignDatePicker}" Foreground="#FFC0C0CB" BorderBrush="White" VerticalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Name="TextBlockData2" Text="Выполнить до  " Foreground="White" Margin="15,15,0,0"/>
-                                            <DatePicker Name="data2" Width="150" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Foreground="White" BorderBrush="White"/>
+                                            <TextBlock Name="TextBlockData2" Text="Выполнить до  " Foreground="White" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                                            <DatePicker Name="data2" Width="140" Style="{StaticResource MaterialDesignDatePicker}" Foreground="#FFC0C0CB" BorderBrush="White" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </StackPanel>
                                     <StackPanel Grid.Row="7" Orientation="Horizontal">

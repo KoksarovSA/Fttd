@@ -18,6 +18,11 @@ namespace Fttd
 
         private void gridtop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            if (e.ClickCount == 3)
+            {
+                if (this.WindowState != WindowState.Maximized) this.WindowState = WindowState.Maximized;
+                else this.WindowState = WindowState.Normal;
+            }
             try { this.DragMove(); }
             catch { }
         }
