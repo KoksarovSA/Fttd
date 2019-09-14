@@ -7,8 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using WinForms = System.Windows.Forms;
 
 namespace Fttd
@@ -55,6 +57,7 @@ namespace Fttd
                         {
                             Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen); 
                             FillChatBox();
+                            Taskb.ShowCustomBalloon(State.GridMessage(Taskb, State.messageColl.LastOrDefault().ToString()), PopupAnimation.Slide, null);
                         }); // Меняет цвет иконки сообщения и обновляет чат в основном потоке
                         timer.Start();
                     }
@@ -79,6 +82,7 @@ namespace Fttd
                     string message = "Задание №" + item.TaskName + " выполнить до " + item.TaskDateOut.ToString();
                     dbaccess1.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'Системное сообщение', '" + State.employee.ShortName + "', '" + Convert.ToString(DateTime.Now) + "', '" + message + "'");
                 }
+                State.UpdateMessageColl();
             }
         }
 
@@ -642,6 +646,8 @@ namespace Fttd
         // Кнопка настройки
         private void Button_settings_Click(object sender, RoutedEventArgs e)
         {
+            Taskb.ShowCustomBalloon(State.GridMessage(Taskb, State.messageColl.LastOrDefault().ToString()), PopupAnimation.Slide, null);
+
             switch (SettingsBar.Width.Value)
             {
                 case 0: SettingsBar.Width = new GridLength(value: 250, type: GridUnitType.Pixel); break;
@@ -684,7 +690,13 @@ namespace Fttd
         //Кнопка свернуть окно
         private void Button_minimized_Click(object sender, RoutedEventArgs e)
         {
-            this.WindowState = WindowState.Minimized;
+            if (this.WindowState == WindowState.Minimized)
+            {
+                this.ShowInTaskbar = true;
+                this.WindowState = WindowState.Normal;
+                this.Activate();                
+            }
+            else { this.WindowState = WindowState.Minimized; this.ShowInTaskbar = false; }
         }
 
         // Кнопка открытия меню добавления детали

@@ -20,14 +20,26 @@ namespace Fttd
             this.Close();
         }
 
+        public static bool change = false;
+        public static int id = 0;
+
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
             if (stateTask.Text != "" && stateTask.Text != " ")
             {
                 Dbaccess dbaccess = new Dbaccess();
-                dbaccess.Dbinsert("task_status", "[task], [detail], [employee], [status], [problem], [solution], [data]",
-                    "'" + numTask.Text + "', '" + detail.Text + "', '" + employee.Text + "', '" + stateTask.Text + "', '" + problem.Text + "', " +
-                    "'" + solution.Text + "', '" + dateNow.Text + "'");
+                if (change)
+                {
+                    dbaccess.DbRead("UPDATE [task_status] SET [detail] = '" + detail.Text + "', [employee] = '" + employee.Text + "', [status] = '" + stateTask.Text +
+                        "', [problem] = '" + problem.Text + "', [solution] = '" + solution.Text + "' WHERE [id] = " + id + "");
+                }
+                else
+                {
+                    dbaccess.Dbinsert("task_status", "[task], [detail], [employee], [status], [problem], [solution], [data]",
+                        "'" + numTask.Text + "', '" + detail.Text + "', '" + employee.Text + "', '" + stateTask.Text + "', '" + problem.Text + "', " +
+                        "'" + solution.Text + "', '" + dateNow.Text + "'");
+                }
+
                 State.UpdateTaskStatusColl();
                 this.Close();
                 foreach (Window window in Application.Current.Windows)
@@ -42,7 +54,7 @@ namespace Fttd
             else
             {
                 System.Windows.Forms.MessageBox.Show("Заполните статус задания");
-            }           
+            }
         }
 
         private void RowDefinition_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

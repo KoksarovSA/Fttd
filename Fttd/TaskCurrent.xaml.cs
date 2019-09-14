@@ -140,19 +140,20 @@ namespace Fttd
                         Height = 15,
                         Background = null,
                         FontWeight = FontWeights.Bold,
-                        Content = "+",                        
+                        Content = "+",
                     };
-                    btAddState.Click += (object sender, RoutedEventArgs e) => 
+                    btAddState.Click += (object sender, RoutedEventArgs e) =>
                     {
                         AddStateTask addStateTask = new AddStateTask();
                         addStateTask.Show();
+                        AddStateTask.change = false;
                         addStateTask.numTask.Text = tbRectangle.Text.Trim();
                         addStateTask.dateNow.Text = Convert.ToString(DateTime.Now);
 
-                    };  
+                    };
                     Expander ex = new Expander()
                     {
-                        Style = null,                        
+                        Style = null,
                         Header = "Текущее состояние: " + State.taskStatusColl.OrderByDescending(item => item.Data).FirstOrDefault(item => item.Task.Contains(tasks[i].TaskName))?.Status ?? " ",
                         Padding = new Thickness(10, 0, 0, 0),
                         Margin = new Thickness(0, 10, 10, 13),
@@ -183,7 +184,7 @@ namespace Fttd
 
                     foreach (TaskStatus item in State.taskStatusColl.Where(item => item.Task == tasks[i].TaskName.Trim()).OrderByDescending(item => item.Data))
                     {
-                        stack2.Children.Add( new Expander()
+                        Expander expander = new Expander()
                         {
                             Header = item.Data.ToString() + " " + item.Status,
                             Style = null,
@@ -195,10 +196,27 @@ namespace Fttd
                                 Text = "Состояние: " + item.Status + "\nДеталь: " + item.Detail + "\nПроблема: " + item.Problem + "\nРешение: " + item.Solution + "\nСотрудник: " + item.Employee,
                                 Margin = new Thickness(20, 0, 0, 0),
                                 TextWrapping = TextWrapping.Wrap,
-                                Width = 580,
+                                Width = 450,
+                                HorizontalAlignment = HorizontalAlignment.Left,
                                 Foreground = (Brush)bc.ConvertFrom("#000000")
                             }
-                        });
+                        };
+                        expander.AddHandler(Expander.MouseDoubleClickEvent, new RoutedEventHandler((object sender, RoutedEventArgs e) =>
+                        {
+                            AddStateTask addStateTask = new AddStateTask();
+                            addStateTask.Show();
+                            AddStateTask.change = true;
+                            AddStateTask.id = item.Id;
+                            addStateTask.textUp.Text = "Изменить состояние задания";
+                            addStateTask.buttonOk.Content = "Изменить";
+                            addStateTask.numTask.Text = item.Task.Trim();
+                            addStateTask.stateTask.Text = item.Status ?? "";
+                            addStateTask.detail.Text = item.Detail ?? "";
+                            addStateTask.problem.Text = item.Problem ?? "";
+                            addStateTask.solution.Text = item.Solution ?? "";
+                            addStateTask.dateNow.Text = Convert.ToString(item.Data);
+                        }));
+                        stack2.Children.Add(expander);
                     }
                     ex.Content = stack2;
 
@@ -218,15 +236,12 @@ namespace Fttd
                     Grid.SetRow(rectangle, i + 1);
                     Grid.SetColumn(rectangle, 0);
                     Grid.SetColumnSpan(rectangle, 3);
-                    //Grid.SetRow(tbRectangle, i + 1);
-                    //Grid.SetColumn(tbRectangle, 0);
-                    //Grid.SetColumnSpan(tbRectangle, 2);
                 }
                 else
                 {
                     BrushConverter bc = new BrushConverter();
                     Rectangle rectangle = new Rectangle()
-                    {                        
+                    {
                         Height = 6,
                         Stroke = (Brush)bc.ConvertFrom("#FFCED6D8"),
                         Fill = (Brush)bc.ConvertFrom("#FF135291"),
@@ -279,6 +294,7 @@ namespace Fttd
                     {
                         AddStateTask addStateTask = new AddStateTask();
                         addStateTask.Show();
+                        AddStateTask.change = false;
                         addStateTask.numTask.Text = tbRectangle.Text.Trim();
                         addStateTask.dateNow.Text = Convert.ToString(DateTime.Now);
 
@@ -315,7 +331,7 @@ namespace Fttd
                     ex.ToolTip = tool;
                     foreach (TaskStatus item in State.taskStatusColl.Where(item => item.Task == tasks[i].TaskName.Trim()).OrderByDescending(item => item.Data))
                     {
-                        stack2.Children.Add(new Expander()
+                        Expander expander = new Expander()
                         {
                             Header = item.Data.ToString() + " " + item.Status,
                             Style = null,
@@ -327,11 +343,29 @@ namespace Fttd
                                 Text = "Состояние: " + item.Status + "\nДеталь: " + item.Detail + "\nПроблема: " + item.Problem + "\nРешение: " + item.Solution + "\nСотрудник: " + item.Employee,
                                 Margin = new Thickness(20, 0, 0, 0),
                                 TextWrapping = TextWrapping.Wrap,
-                                Width = 580,
+                                Width = 450,
+                                HorizontalAlignment = HorizontalAlignment.Left,
                                 Foreground = (Brush)bc.ConvertFrom("#000000")
                             }
-                        });
-                    }
+                        };
+                        expander.AddHandler(Expander.MouseDoubleClickEvent, new RoutedEventHandler((object sender, RoutedEventArgs e) =>
+                        {
+                            AddStateTask addStateTask = new AddStateTask();
+                            addStateTask.Show();
+                            AddStateTask.change = true;
+                            AddStateTask.id = item.Id;
+                            addStateTask.textUp.Text = "Изменить состояние задания";
+                            addStateTask.buttonOk.Content = "Изменить";
+                            addStateTask.numTask.Text = item.Task.Trim();
+                            addStateTask.stateTask.Text = item.Status ?? "";
+                            addStateTask.detail.Text = item.Detail ?? "";
+                            addStateTask.problem.Text = item.Problem ?? "";
+                            addStateTask.solution.Text = item.Solution ?? "";
+                            addStateTask.dateNow.Text = Convert.ToString(item.Data);
+                        }));
+                        stack2.Children.Add(expander);
+                    };
+
                     ex.Content = stack2;
 
                     daytask.Children.Add(rectangle);
@@ -402,6 +436,7 @@ namespace Fttd
 
         private void ButtonExit_Click(object sender, RoutedEventArgs e)
         {
+            State.UpdateTaskStatusColl();
             this.Close();
         }
 

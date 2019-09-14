@@ -12,8 +12,9 @@ namespace Fttd.Entities
         {
         }
 
-        public TaskStatus(string task, string detail, string employee, string status, string problem, string solution, string data)
-        {
+        public TaskStatus(int id, string task, string detail, string employee, string status, string problem, string solution, string data)
+        {           
+            Id = id;
             Task = task ?? throw new ArgumentNullException(nameof(task));
             Detail = detail ?? throw new ArgumentNullException(nameof(detail));
             Employee = employee ?? throw new ArgumentNullException(nameof(employee));
@@ -23,6 +24,7 @@ namespace Fttd.Entities
             Data = DateTime.Parse(data);
         }
 
+        public int Id { get; private set; }
         public string Task { get; private set; }
         public string Detail { get; private set; }
         public string Employee { get; private set; }

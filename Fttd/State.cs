@@ -5,7 +5,10 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
-
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace Fttd
 {
@@ -61,6 +64,72 @@ namespace Fttd
         } //День бэкапа 
 
 
+        public static Grid GridMessage(Hardcodet.Wpf.TaskbarNotification.TaskbarIcon taskbarIcon, string message)
+        {
+            Grid grid = new Grid();
+            grid.RowDefinitions.Add(new RowDefinition() { MinHeight = 40 });
+            grid.RowDefinitions.Add(new RowDefinition() { MinHeight = 40, Height = new GridLength(0, GridUnitType.Auto) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(0, GridUnitType.Auto) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(40, GridUnitType.Pixel) });
+            Rectangle rectangle = new Rectangle()
+            {
+                Stroke = Brushes.Gray,
+                Fill = Brushes.White,
+                RadiusY = 10,
+                RadiusX = 10,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Opacity = 0.9
+            };
+            rectangle.AddHandler(Expander.MouseDownEvent, new RoutedEventHandler((object sender, RoutedEventArgs e) =>
+            {
+
+                taskbarIcon.CloseBalloon();
+            }));
+            TextBlock textBlockHeadline = new TextBlock() { Text = "Новое сообщение", FontSize = 17, Margin = new Thickness(10, 0, 0, 0), Foreground = Brushes.Green };
+            TextBlock textBlockMessage = new TextBlock() { Text = message, FontSize = 17, MaxWidth = 300, Margin = new Thickness(5, 0, 5, 5), TextWrapping = TextWrapping.Wrap };
+            Button buttonClose = new Button()
+            {
+                Foreground = Brushes.Gray,
+                BorderBrush = Brushes.Gray,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                BorderThickness = new Thickness(1, 1, 1, 1),
+                Padding = new Thickness(-1, -4, 0, 0),
+                Margin = new Thickness(0, 5, 7, 0),
+                Width = 15,
+                Height = 15,
+                Background = null,
+                FontWeight = FontWeights.Bold,
+                Content = "x"
+            };
+            buttonClose.Click += (object sender, RoutedEventArgs e) =>
+            {
+                taskbarIcon.CloseBalloon();
+            };
+
+            grid.Children.Add(rectangle);
+            Grid.SetRow(rectangle, 0);
+            Grid.SetColumn(rectangle, 0);
+            Grid.SetColumnSpan(rectangle, 2);
+            Grid.SetRowSpan(rectangle, 2);
+
+            grid.Children.Add(textBlockHeadline);
+            Grid.SetRow(textBlockHeadline, 0);
+            Grid.SetColumn(textBlockHeadline, 0);
+
+            grid.Children.Add(textBlockMessage);
+            Grid.SetRow(textBlockMessage, 1);
+            Grid.SetColumn(textBlockMessage, 0);
+            Grid.SetColumnSpan(textBlockMessage, 2);
+
+            grid.Children.Add(buttonClose);
+            Grid.SetRow(buttonClose, 0);
+            Grid.SetColumn(buttonClose, 1);
+
+            return grid;
+        }
+        
         /// <summary>
         /// Метод определяет и заполняет сотрудника запустившего приложение и заполняет коллекцию сотрудников из БД 
         /// </summary>
@@ -103,12 +172,12 @@ namespace Fttd
         public static void UpdateTaskStatusColl()
         {
             Dbaccess dbaccess = new Dbaccess();
-            dbaccess.Db2select("SELECT [task], [detail], [employee], [status], [problem], [solution], [data] FROM [task_status]");
+            dbaccess.Db2select("SELECT [id], [task], [detail], [employee], [status], [problem], [solution], [data] FROM [task_status]");
             taskStatusColl.Clear();
             for (int i = 0; i < dbaccess.Querydata.Count; i++)
             {
                 string[] vs = dbaccess.Querydata[i];
-                taskStatusColl.Add(new TaskStatus(vs[0], vs[1], vs[2], vs[3], vs[4], vs[5], vs[6]));
+                taskStatusColl.Add(new TaskStatus(Convert.ToInt16(vs[0]), vs[1], vs[2], vs[3], vs[4], vs[5], vs[6], vs[7]));
             }
         }
 
