@@ -1,13 +1,16 @@
-﻿using Microsoft.Win32;
+﻿using Fttd.Entities;
+using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using WinForms = System.Windows.Forms;
 
 namespace Fttd
@@ -20,32 +23,118 @@ namespace Fttd
         public MainWindow()
         {
             InitializeComponent();
-            if (ConfigurationManager.AppSettings.Get("CheckBoxTreeViewSet") == "true") { CheckBoxTreeViewSet.IsChecked=true; }
             try
             {
+                State.BackupFTTDDB();
+                TextBoxBD.Text = State.DirDb;
+                TextBoxDir.Text = State.DirFiles;
+                State.stateTreeView = true;
+                State.UpdateDataTreeView();
                 TreeviewSet();
-                Param_in param = new Param_in();
-                TextBoxBD.Text = param.GetDirDB();
-                TextBoxDir.Text = param.GetDirFiles();
-                BackupFTTDDB();
-                Window1 window = new Window1();
-                window.Show();
+                State.UpdateEmployee();
+                WhereEmployeeUpdate();
+                CheckTask();
+                UpdateChatBox(60000);
             }
-            catch (Exception e){ MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
+            catch (Exception e) { MessageBox.Show(e + " Укажите в настройках файл базы данных и базовую директорию хранения файлов.", "Ошибка"); }
         }
 
         /// <summary>
-        /// Метод бэкапит базу данных через 6 дней  
+        /// Метоз запускает проверку новых сообщений по таймеру
         /// </summary>
-        public void BackupFTTDDB()
+        internal void UpdateChatBox(int timems)
         {
-            Param_in param = new Param_in();
-            if (Math.Abs(DateTime.Now.Day - Convert.ToInt32(param.GetFTTDBackup())) > 6)
+            System.Timers.Timer timer = new System.Timers.Timer(timems);
+            timer.Enabled = true;
+            try
             {
-                Directory.CreateDirectory(Directory.GetParent(param.GetDirDB()).ToString() + "\\backup");
-                if(!File.Exists(Directory.GetParent(param.GetDirDB()).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(param.GetDirDB()).Name)) File.Copy(param.GetDirDB(), Directory.GetParent(param.GetDirDB()).ToString() + "\\backup\\backup_from_" + DateTime.Now.ToString("dd.MM.yyyy") + "_" + new DirectoryInfo(param.GetDirDB()).Name);
-                param.SetFTTDBackup(Convert.ToString(DateTime.Now.Day));
+                timer.Elapsed += new System.Timers.ElapsedEventHandler((object source, System.Timers.ElapsedEventArgs e) =>
+                {
+                    timer.Stop();
+                    if (State.UpdateMessageColl())
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            Chat_expand.Foreground = new SolidColorBrush(Colors.YellowGreen); 
+                            FillChatBox();
+                            Taskb.ShowCustomBalloon(State.GridMessage(Taskb, State.messageColl.LastOrDefault().ToString()), PopupAnimation.Slide, null);
+                        }); // Меняет цвет иконки сообщения и обновляет чат в основном потоке
+                        timer.Start();
+                    }
+                    else timer.Start();
+                });
             }
+            catch (Exception) { timer.Start(); }
+            timer.AutoReset = true;
+        }
+
+        /// <summary>
+        /// Метод отправляет системное сообщение если у сотрудника есть отслеживаемые актуальные задания
+        /// </summary>
+        private void CheckTask()
+        {
+            Dbaccess dbaccess1 = new Dbaccess();
+            dbaccess1.DbRead("DELETE * FROM [chat] WHERE [FromEmployee] = 'Системное сообщение' AND [WhereEmployee] = '" + State.employee.ShortName + "' AND [Message] LIKE 'Задание%'");
+            if (State.taskColl != null)
+            {
+                foreach (TaskDet item in State.taskColl.Where(item => item.TaskIsCurrent == true && item.Leading == State.employee.ShortName))
+                {
+                    string message = "Задание №" + item.TaskName + " выполнить до " + item.TaskDateOut.ToString();
+                    dbaccess1.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'Системное сообщение', '" + State.employee.ShortName + "', '" + Convert.ToString(DateTime.Now) + "', '" + message + "'");
+                }
+                State.UpdateMessageColl();
+            }
+        }
+
+        /// <summary>
+        /// Метод отправляет сообщения в БД и обновляет чат
+        /// </summary>
+        private void SendChatBox()
+        {
+            Dbaccess dbaccess = new Dbaccess();
+            dbaccess.Dbinsert("chat", "[FromEmployee], [WhereEmployee], [DateTime], [Message]", "'" + State.employee.ShortName + "', '" + WhereEmployee.Text + "', '" + Convert.ToString(DateTime.Now) + "', '" + ChatString.Text + "'");
+            State.UpdateMessageColl();
+            FillChatBox();
+        }
+
+        /// <summary>
+        /// Метод обновляет чат
+        /// </summary>
+        internal void FillChatBox()
+        {
+            ChatBox.Items.Clear();
+            foreach (Message item in State.messageColl.OrderBy(item => item.TimeMess))
+            {
+                StackPanel panel = new StackPanel();
+                panel.Orientation = Orientation.Horizontal;
+                TextBlock date = new TextBlock() { Text = item.TimeMess.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.Gold) };
+                TextBlock from = new TextBlock() { Text = item.FromEmployee.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.YellowGreen) };
+                TextBlock to = new TextBlock() { Text = " =>  ", VerticalAlignment = VerticalAlignment.Center };
+                TextBlock where = new TextBlock() { Text = item.WhereEmployee.ToString(), Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(Colors.YellowGreen) };
+                TextBlock x = new TextBlock() { Text = ": ", Foreground = new SolidColorBrush(Colors.YellowGreen), VerticalAlignment = VerticalAlignment.Center };
+                TextBox message = new TextBox() { Text = item.Mess.ToString(), IsReadOnly = true, BorderThickness = new Thickness(0, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+                panel.Children.Add(date);
+                panel.Children.Add(from);
+                panel.Children.Add(to);
+                panel.Children.Add(where);
+                panel.Children.Add(x);
+                panel.Children.Add(message);
+                ChatBox.Items.Add(panel);
+                ChatBox.ScrollIntoView(panel);
+            };
+        }
+
+        /// <summary>
+        /// Метод заполняющий комбобокс кому отправить сообщение
+        /// </summary>
+        private void WhereEmployeeUpdate()
+        {
+            WhereEmployee.Items.Clear();
+            foreach (Employees item in State.employeeColl.OrderBy(item => item.LastName).Where(item => item.ShortName != "Нет" && item.ShortName != "Системное сообщение"))
+            {
+                WhereEmployee.Items.Add(item.ShortName);
+            }
+            WhereEmployee.Text = "Все";
         }
 
         /// <summary>
@@ -56,55 +145,36 @@ namespace Fttd
         /// <param name="name">Название детали</param>
         /// <param name="file_type">Тип файла</param>
         /// <param name="note">Примечание</param>
-        public async void CopyFile(string dirout, string index, string name, string newfilename, string file_type = "None", string note = "None")
+        public void CopyFile(string dirout, string index, string name, string newfilename, string file_type = "None", string note = "None")
         {
-            Work_with_files work = new Work_with_files(dirout, index, name, file_type, newfilename);
-            switch (file_type)
+            AllFiles file = new AllFiles(name, index, TextBlock_type.Text, dirout, note);
+            switch (TextBlock_type.Text)
             {
-                case "Задание":
+                case "Задания":
                     {
-                        string[] vs = work.Dir_file_copy_in.Split('\\');
-                        string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
                         Dbaccess dbaccess = new Dbaccess();
-                        await Task.Run(() => dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'"));                        
+                        dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + file.Detail_index + "', '" + file.Detail_name + "', '" + file.File_name + "', '" + file_type + "', '" + file.File_dir_in_short + "', '" + file.File_note + "'");
                         break;
                     }
-                default:
+                case "Приспособления":
                     {
-                        if (TextBlock_type.Text == "Приспособления")
+                        if (file.Copy_file())
                         {
-                            if (File.Exists(work.Dir_file_copy_in))
-                            {
-                                MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе.", "Ошибка");
-                            }
-                            else
-                            {
-                                Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
-                                await Task.Run(() => File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in));
-                                string[] vs = work.Dir_file_copy_in.Split('\\');
-                                string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
-                                Dbaccess dbaccess = new Dbaccess();
-                                await Task.Run(() => dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'"));
-                            }
+                            Dbaccess dbaccess = new Dbaccess();
+                            dbaccess.Dbinsert("device_files", "[indexdev], [file_name], [file_type], [file_dir], [file_note]", "'" + file.Detail_index + "', '" + file.File_name + "', '" + file_type + "', '" + file.File_dir_in_short + "', '" + file.File_note + "'");
                         }
-                        else
-                        {
-                            if (File.Exists(work.Dir_file_copy_in))
-                            {
-                                MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе.", "Ошибка");
-                            }
-                            else
-                            {
-                                Directory.CreateDirectory(work.Dir_copy_in + "\\" + name + "_" + index + "");
-                                File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
-                                string[] vs = work.Dir_file_copy_in.Split('\\');
-                                string vs1 = "\\" + vs[vs.Length - 2] + "\\" + vs[vs.Length - 1];
-                                Dbaccess dbaccess = new Dbaccess();
-                                dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + index + "', '" + name + "', '" + work.File + "', '" + file_type + "', '" + vs1 + "', '" + note + "'");
-                            }
-                        }                      
                         break;
                     }
+                case "Детали":
+                    {
+                        if (file.Copy_file())
+                        {
+                            Dbaccess dbaccess = new Dbaccess();
+                            dbaccess.Dbinsert("stack_files", "[detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note]", "'" + file.Detail_index + "', '" + file.Detail_name + "', '" + file.File_name + "', '" + file_type + "', '" + file.File_dir_in_short + "', '" + file.File_note + "'");
+                        }
+                        break;
+                    }
+                default: break;
             }
             SelectedTreeViewItem();
         }
@@ -115,252 +185,124 @@ namespace Fttd
         public void TreeviewSet()
         {
             TreeViewDet.Items.Clear();
-            Dbaccess dbaccess = new Dbaccess();
-            switch(TextBlock_type.Text)
+            if (State.stateTreeView) { State.UpdateDataTreeView(); }
+            switch (TextBlock_type.Text)
             {
                 case "Детали":
-                    if (CheckBoxTreeViewSet.IsChecked == false)
+                    ComboBoxProekt.Items.Clear();
+                    ComboBoxIndex.Items.Clear();
+                    ComboBoxName.Items.Clear();
+                    foreach (Project itemP in State.projectColl)
                     {
-                        dbaccess.Dbselect("SELECT [detail_index], [detail_name] FROM [detail_db] ORDER BY [detail_name]");
-                        ComboBoxIndex.Items.Clear();
-                        ComboBoxName.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        ComboBoxProekt.Items.Add(itemP.ProjectName);
+                        TreeViewItem ITProekt = new TreeViewItem();
+                        ITProekt.Header = itemP.ProjectName;
+                        TreeViewDet.Items.Add(ITProekt);
+                        foreach (Detail itemD in State.detailColl.Where(itemD => itemD.Project == itemP.ProjectName))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            TextBlock IT2 = new TextBlock();
-                            IT2.Text = vs[1] + '|' + vs[0];
-                            TreeViewDet.Items.Add(IT2);
-                            ComboBoxIndex.Items.Add(vs[0]);
-                            ComboBoxName.Items.Add(vs[1]);
-                        }
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
-                        ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
-                        }
-                        dbaccess.Dbselect("SELECT [task] FROM [task] ORDER BY [task]");
-                        ComboBoxZad.Items.Clear();
-                        ComboBoxTask.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxZad.Items.Add(vs[0]);
-                            ComboBoxTask.Items.Add(vs[0]);
-
-                        }
-                        dbaccess.Dbselect("SELECT DISTINCT [razrabotal] FROM [detail_db] ORDER BY [razrabotal]");
-                        ComboBoxRazrab.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxRazrab.Items.Add(vs[0]);
-                        }
-                        dbaccess.Dbselect("SELECT DISTINCT [inventory] FROM [detail_db] ORDER BY [inventory] DESC");
-                        ComboBoxNPU.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxNPU.Items.Add(vs[0]);
+                            TextBlock ITDet = new TextBlock();
+                            ITDet.Text = itemD.DetailName + '|' + itemD.Index;
+                            ITProekt.Items.Add(ITDet);
+                            ComboBoxIndex.Items.Add(itemD.Index);
+                            ComboBoxName.Items.Add(itemD.DetailName);
                         }
                     }
-                    else if (CheckBoxTreeViewSet.IsChecked == true)
+                    ComboBoxZad.Items.Clear();
+                    ComboBoxTask.Items.Clear();
+                    foreach (TaskDet item in State.taskColl)
                     {
-                        dbaccess.Dbselect("SELECT DISTINCT [project] FROM [project] ORDER BY [project]");
-                        ComboBoxProekt.Items.Clear();
-                        ComboBoxIndex.Items.Clear();
-                        ComboBoxName.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
-                            TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = vs[0];
-                            TreeViewDet.Items.Add(ITProekt);
-                            Dbaccess dbaccess2 = new Dbaccess();
-                            dbaccess2.Dbselect("SELECT [detail_index], [detail_name], [project] FROM [detail_db] WHERE [project] = '" + vs[0] + "' ORDER BY [detail_name]");
-                            for (int j = 0; j < dbaccess2.Querydata.Count; ++j)
-                            {
-                                string[] vs2 = dbaccess2.Querydata[j];
-                                TextBlock ITDet = new TextBlock();
-                                ITDet.Text = vs2[1] + '|' + vs2[0];
-                                ITProekt.Items.Add(ITDet);
-                                ComboBoxIndex.Items.Add(vs2[0]);
-                                ComboBoxName.Items.Add(vs2[1]);
-                            }
-                        }
-                        dbaccess.Dbselect("SELECT [task] FROM [task] ORDER BY [task]");
-                        ComboBoxZad.Items.Clear();
-                        ComboBoxTask.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxZad.Items.Add(vs[0]);
-                        }
-                        dbaccess.Dbselect("SELECT DISTINCT [razrabotal] FROM [detail_db] ORDER BY [razrabotal]");
-                        ComboBoxRazrab.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxRazrab.Items.Add(vs[0]);
-                        }
-                        dbaccess.Dbselect("SELECT DISTINCT [inventory] FROM [detail_db] ORDER BY [inventory] DESC");
-                        ComboBoxNPU.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxNPU.Items.Add(vs[0]);
-                        }
+                        ComboBoxZad.Items.Add(item.TaskName);
+                        ComboBoxTask.Items.Add(item.TaskName);
+                    }
+                    ComboBoxRazrab.Items.Clear();
+                    foreach (Developer item in State.developerColl.OrderBy(item => item.DeveloperName).Distinct())
+                    {
+                        ComboBoxRazrab.Items.Add(item.DeveloperName);
+                    }
+                    ComboBoxNPU.Items.Clear();
+                    foreach (Detail item in State.detailColl.OrderByDescending(item => item.Inventory))
+                    {
+                        ComboBoxNPU.Items.Add(item.Inventory);
                     }
                     break;
                 case "Приспособления":
-                    dbaccess.Dbselect("SELECT [indexdev] FROM [device] ORDER BY [indexdev]");
                     ComboBoxIndex.Items.Clear();
                     ComboBoxName.Items.Clear();
-                    for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                    foreach (Device item in State.deviceColl)
                     {
-                            string[] vs = dbaccess.Querydata[i];
-                            TextBlock IT2 = new TextBlock();
-                            IT2.Text = vs[0];
-                            TreeViewDet.Items.Add(IT2);
-                            ComboBoxIndex.Items.Add(vs[0]);
+                        TextBlock IT2 = new TextBlock();
+                        IT2.Text = item.DeviceIndex;
+                        TreeViewDet.Items.Add(IT2);
+                        ComboBoxIndex.Items.Add(item.DeviceIndex);
                     }
-                    dbaccess.Dbselect("SELECT DISTINCT [razrabotal] FROM [detail_db] ORDER BY [razrabotal]");
                     ComboBoxRazrab.Items.Clear();
-                    for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                    foreach (Developer item in State.developerColl.OrderBy(item => item.DeveloperName).Distinct())
                     {
-                        string[] vs = dbaccess.Querydata[i];
-                        ComboBoxRazrab.Items.Add(vs[0]);
+                        ComboBoxRazrab.Items.Add(item.DeveloperName);
                     }
                     break;
                 case "Задания":
-                    if (CheckBoxTreeViewSet.IsChecked == false)
+                    ComboBoxProekt.Items.Clear();
+                    data1.Text = "";
+                    data2.Text = "";
+                    chTaskIsCurrent.IsChecked = false;
+                    foreach (Project itemP in State.projectColl)
                     {
-                        dbaccess.Dbselect("SELECT [task] FROM [task] ORDER BY [task]");
-                        ComboBoxZad.Items.Clear();
-                        ComboBoxTask.Items.Clear();
-                        data1.Text = "";
-                        data2.Text = "";
-                        chTaskIsCurrent.IsChecked = false;
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        ComboBoxProekt.Items.Add(itemP.ProjectName);
+                        TreeViewItem ITProekt = new TreeViewItem();
+                        ITProekt.Header = itemP.ProjectName;
+                        TreeViewDet.Items.Add(ITProekt);
+                        foreach (TaskDet itemD in State.taskColl.Where(itemD => itemD.ProjectTaskName == itemP.ProjectName))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            TextBlock IT2 = new TextBlock();
-                            IT2.Text = vs[0];
-                            TreeViewDet.Items.Add(IT2);
-                            ComboBoxZad.Items.Add(vs[0]);
-                            ComboBoxTask.Items.Add(vs[0]);
-
-                        }
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
-                        ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
-                        }
-                    }
-                    else if (CheckBoxTreeViewSet.IsChecked == true)
-                    {
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
-                        ComboBoxProekt.Items.Clear();
-                        data1.Text = "";
-                        data2.Text = "";
-                        chTaskIsCurrent.IsChecked = false;
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
-                            TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = vs[0];
-                            TreeViewDet.Items.Add(ITProekt);
-                            Dbaccess dbaccess2 = new Dbaccess();
-                            dbaccess2.Dbselect("SELECT [task], [project] FROM [task] WHERE [project] = '" + vs[0] + "' ORDER BY [task]");
-                            for (int j = 0; j < dbaccess2.Querydata.Count; ++j)
-                            {
-                                string[] vs2 = dbaccess2.Querydata[j];
-                                TextBlock ITDet = new TextBlock();
-                                ITDet.Text = vs2[0];
-                                ITProekt.Items.Add(ITDet);
-                                ComboBoxZad.Items.Add(vs2[0]);
-                                ComboBoxTask.Items.Add(vs2[0]);
-                            }
+                            TextBlock ITDet = new TextBlock();
+                            ITDet.Text = itemD.TaskName;
+                            ITProekt.Items.Add(ITDet);
+                            ComboBoxZad.Items.Add(itemD.TaskName);
+                            ComboBoxTask.Items.Add(itemD.TaskName);
                         }
                     }
                     break;
                 case "Проекты":
-                    dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
                     ComboBoxProekt.Items.Clear();
-                    for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                    foreach (Project itemP in State.projectColl)
                     {
-                        string[] vs = dbaccess.Querydata[i];
-                        TextBlock IT2 = new TextBlock();
-                        IT2.Text = vs[0];
-                        TreeViewDet.Items.Add(IT2);
-                        ComboBoxProekt.Items.Add(vs[0]);
+                        ComboBoxProekt.Items.Add(itemP.ProjectName);
+                        TreeViewItem ITProekt = new TreeViewItem();
+                        ITProekt.Header = itemP.ProjectName;
+                        TreeViewDet.Items.Add(ITProekt);
                     }
                     break;
                 case "Графики":
-                    if (CheckBoxTreeViewSet.IsChecked == false)
+                    ComboBoxProekt.Items.Clear();
+                    ComboBoxName.Items.Clear();
+                    foreach (Project itemP in State.projectColl)
                     {
-                        dbaccess.Dbselect("SELECT [namegrap] FROM [graphics] ORDER BY [namegrap]");
-                        ComboBoxName.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        ComboBoxProekt.Items.Add(itemP.ProjectName);
+                        TreeViewItem ITProekt = new TreeViewItem();
+                        ITProekt.Header = itemP.ProjectName;
+                        TreeViewDet.Items.Add(ITProekt);
+                        foreach (Graphics itemD in State.graphicsColl.Where(itemD => itemD.ProjectGrap == itemP.ProjectName))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            TextBlock IT2 = new TextBlock();
-                            IT2.Text = vs[0];
-                            TreeViewDet.Items.Add(IT2);
-                            ComboBoxName.Items.Add(vs[0]);
-                        }
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
-                        ComboBoxProekt.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
-                        }
-                    }
-                    else if (CheckBoxTreeViewSet.IsChecked == true)
-                    {
-                        dbaccess.Dbselect("SELECT [project] FROM [project] ORDER BY [project]");
-                        ComboBoxProekt.Items.Clear();
-                        ComboBoxName.Items.Clear();
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-                        {
-                            string[] vs = dbaccess.Querydata[i];
-                            ComboBoxProekt.Items.Add(vs[0]);
-                            TreeViewItem ITProekt = new TreeViewItem();
-                            ITProekt.Header = vs[0];
-                            TreeViewDet.Items.Add(ITProekt);
-                            Dbaccess dbaccess2 = new Dbaccess();
-                            dbaccess2.Dbselect("SELECT [namegrap], [project] FROM [graphics] WHERE [project] = '" + vs[0] + "' ORDER BY [namegrap]");                            
-                            for (int j = 0; j < dbaccess2.Querydata.Count; ++j)
-                            {
-                                string[] vs2 = dbaccess2.Querydata[j];
-                                TextBlock ITDet = new TextBlock();
-                                ITDet.Text = vs2[0];
-                                ITProekt.Items.Add(ITDet);
-                                ComboBoxName.Items.Add(vs2[0]);
-                            }
+                            TextBlock ITDet = new TextBlock();
+                            ITDet.Text = itemD.NameGrap;
+                            ITProekt.Items.Add(ITDet);
+                            ComboBoxName.Items.Add(itemD.NameGrap);
                         }
                     }
                     break;
-                case "Служебные":
-                    dbaccess.Dbselect("SELECT [nameserv] FROM [service] ORDER BY [nameserv]");
+                case "Документы":
+
                     ComboBoxIndex.Items.Clear();
                     ComboBoxName.Items.Clear();
-                    for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                    foreach (Services item in State.servicesColl)
                     {
-                        string[] vs = dbaccess.Querydata[i];
                         TextBlock IT2 = new TextBlock();
-                        IT2.Text = vs[0];
+                        IT2.Text = item.NameServ;
                         TreeViewDet.Items.Add(IT2);
-                        ComboBoxIndex.Items.Add(vs[0]);
+                        ComboBoxIndex.Items.Add(item.NameServ);
                     }
                     break;
-                default:break;
+                default: break;
             }
         }
 
@@ -368,7 +310,7 @@ namespace Fttd
         /// Метод для действия при выделении TreeViewDetItem 
         /// </summary>
         public void SelectedTreeViewItem()
-        {           
+        {
             try
             {
                 data1.Text = "";
@@ -386,7 +328,7 @@ namespace Fttd
                         TextBlockPD.Text = GetNoteDetail(textItem);
                         if (textItem != "") SetDataGrid(textItem);
                         break;
-                }         
+                }
             }
             catch { TextBlockPD.Text = ""; TextBlockPF.Text = ""; }
             TextBlockPF.Text = "";
@@ -394,30 +336,8 @@ namespace Fttd
             ComboBoxTypeFiles.Text = "";
             TextBoxFiles.Clear();
             TextBoxNote.Clear();
+            TextBoxDirFile.Clear();
         }
-
-        //switch (TextBlock_type.Text)
-        //    {
-        //        case "Детали":
-                    
-        //            break;
-        //        case "Приспособления":
-                    
-        //            break;
-        //        case "Задания":
-                    
-        //            break;
-        //        case "Проекты":
-                    
-        //            break;
-        //        case "Графики":
-                    
-        //            break;
-        //        case "Служебные":
-                    
-        //            break;
-        //        default: break;
-        //    }
 
         /// <summary>
         /// Метод заполняющий DataGridFiles
@@ -425,45 +345,37 @@ namespace Fttd
         /// <param name="index">Индекс выбраной в TreeViewDet детали</param>
         public void SetDataGrid(string index)
         {
+            ObservableCollection<Table> coll = new ObservableCollection<Table>();
+            Dbaccess dbaccess = new Dbaccess();
             switch (TextBlock_type.Text)
             {
                 case "Детали":
                     try
                     {
-                        ObservableCollection<Table> coll = new ObservableCollection<Table>();
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [detail_index], [file_name], [file_type] FROM [stack_files] WHERE [detail_index] = '" + index + "'");
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
                             coll.Add(new Table() { Name = vs[1], Type = vs[2] });
                         }
-                        DataGridFiles.ItemsSource = coll;
-                        DataGridFiles.Items.Refresh();
                     }
-                    catch { }                  
+                    catch { }
                     break;
                 case "Приспособления":
                     try
                     {
-                        ObservableCollection<Table> coll = new ObservableCollection<Table>();
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [indexdev], [file_name], [file_type] FROM [device_files] WHERE [indexdev] = '" + index + "'");
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
                             coll.Add(new Table() { Name = vs[1], Type = vs[2] });
                         }
-                        DataGridFiles.ItemsSource = coll;
-                        DataGridFiles.Items.Refresh();
                     }
                     catch { }
                     break;
                 case "Задания":
                     try
                     {
-                        ObservableCollection<Table> coll = new ObservableCollection<Table>();
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [task], [dir] FROM [task] WHERE [task] = '" + index + "'");
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
@@ -473,8 +385,6 @@ namespace Fttd
                             if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Задание"; }
                             coll.Add(new Table() { Name = fn, Type = tp });
                         }
-                        DataGridFiles.ItemsSource = coll;
-                        DataGridFiles.Items.Refresh();
                     }
                     catch { }
                     break;
@@ -483,8 +393,6 @@ namespace Fttd
                 case "Графики":
                     try
                     {
-                        ObservableCollection<Table> coll = new ObservableCollection<Table>();
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [namegrap], [dir] FROM [graphics] WHERE [namegrap] = '" + index + "'");
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
@@ -494,32 +402,28 @@ namespace Fttd
                             if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "График"; }
                             coll.Add(new Table() { Name = fn, Type = tp });
                         }
-                        DataGridFiles.ItemsSource = coll;
-                        DataGridFiles.Items.Refresh();
                     }
                     catch { }
                     break;
-                case "Служебные":
+                case "Документы":
                     try
                     {
-                        ObservableCollection<Table> coll = new ObservableCollection<Table>();
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [nameserv], [dir] FROM [service] WHERE [nameserv] = '" + index + "'");
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
                             string fn = "";
                             string tp = "";
-                            if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Служебная"; }
+                            if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Документы"; }
                             coll.Add(new Table() { Name = fn, Type = tp });
                         }
-                        DataGridFiles.ItemsSource = coll;
-                        DataGridFiles.Items.Refresh();
                     }
                     catch { }
                     break;
                 default: break;
-            }  
+            }
+            DataGridFiles.ItemsSource = coll;
+            DataGridFiles.Items.Refresh();
         }
 
         /// <summary>
@@ -529,75 +433,61 @@ namespace Fttd
         /// <returns>Данные детали строкой</returns>
         public string GetNoteDetail(string index)
         {
+            string x = "";
             switch (TextBlock_type.Text)
             {
                 case "Детали":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
-                        dbaccess.Dbselect("SELECT [detail_index], [detail_name], [inventory], [number_task], [project], [razrabotal], [data_add] FROM [detail_db] WHERE [detail_index] = '" + index + "'");
-                        string x = "";
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (Detail item in State.detailColl.Where(item => item.Index == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            x = "Деталь: " + vs[1] + "\n" + "Индекс: " + vs[0] + "\n" + "Инв.№ " + vs[2] + "\n" + "Проект: " + vs[4] + "\n" + "№ Задания: " + vs[3] + "\n" + "Разработал: " + vs[5] + "\n" + "Дата добавления: " + vs[6];
-                            ComboBoxIndex.Text = vs[0];
-                            ComboBoxName.Text = vs[1];
-                            ComboBoxNPU.Text = vs[2];
-                            ComboBoxZad.Text = vs[3];
-                            ComboBoxProekt.Text = vs[4];
-                            ComboBoxRazrab.Text = vs[5];
+                            x = item.ToString();
+                            ComboBoxIndex.Text = item.Index;
+                            ComboBoxName.Text = item.DetailName;
+                            ComboBoxNPU.Text = Convert.ToString(item.Inventory);
+                            ComboBoxZad.Text = item.Task;
+                            ComboBoxProekt.Text = item.Project;
+                            ComboBoxRazrab.Text = item.Developer;
                         }
                         return x;
                     }
                     catch
                     {
-                        string x = "";
                         return x;
-                    }                   
+                    }
                 case "Приспособления":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
-                        dbaccess.Dbselect("SELECT [indexdev], [namedev], [razrab], [data_add] FROM [device] WHERE [indexdev] = '" + index + "'");
-                        string x = "";
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (Device item in State.deviceColl.Where(item => item.DeviceIndex == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            x = "Приспособление: " + vs[1] + "\n" + "Индекс: " + vs[0] + "\n" + "Разработал: " + vs[2] + "\n" + "Дата добавления: " + vs[3];
-                            ComboBoxIndex.Text = vs[0];
-                            ComboBoxName.Text = vs[1];
-                            ComboBoxRazrab.Text = vs[3];
+                            x = item.ToString();
+                            ComboBoxIndex.Text = item.DeviceIndex;
+                            ComboBoxName.Text = item.DeviceName;
+                            ComboBoxRazrab.Text = item.DeviceDeveloper;
                         }
                         return x;
                     }
                     catch
                     {
-                        string x = "";
                         return x;
                     }
                 case "Задания":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
-                        dbaccess.Dbselect("SELECT [task], [project], [iscurrent], [datein], [dateout] FROM [task] WHERE [task] = '" + index + "'");
-                        string x = "";
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (TaskDet item in State.taskColl.Where(item => item.TaskName == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            string current = "Нет";
-                            if (vs[2] == "True") { chTaskIsCurrent.IsChecked = true; current = "Да"; }
-                            x = "Задание: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Актуальное: " + current + "\n" + "Дата выдачи: " + vs[3] + "\n" + "Выполнить до: " + vs[4];
-                            ComboBoxZad.Text = vs[0];
-                            ComboBoxProekt.Text = vs[1];
-                            data1.SelectedDate = DateTime.Parse(vs[3]);
-                            data2.SelectedDate = DateTime.Parse(vs[4]);
+                            x = item.ToString();
+                            ComboBoxZad.Text = item.TaskName;
+                            ComboBoxProekt.Text = item.ProjectTaskName;
+                            ComboBoxRazrab.Text = item.Leading;
+                            data1.SelectedDate = item.TaskDateIn;
+                            data2.SelectedDate = item.TaskDateOut;
+                            if (item.TaskIsCurrent) chTaskIsCurrent.IsChecked = true;
                         }
                         return x;
                     }
                     catch
                     {
-                        string x = "";
                         return x;
                     }
                 case "Проекты":
@@ -606,41 +496,31 @@ namespace Fttd
                 case "Графики":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
-                        dbaccess.Dbselect("SELECT [namegrap], [project], [data_add] FROM [graphics] WHERE [namegrap] = '" + index + "'");
-                        string x = "";
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (Graphics item in State.graphicsColl.Where(item => item.NameGrap == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            x = "График: " + vs[0] + "\n" + "Проект: " + vs[1] + "\n" + "Дата добавления: " + vs[2];
-                            ComboBoxName.Text = vs[0];
-                            ComboBoxProekt.Text = vs[1];
+                            x = item.ToString();
+                            ComboBoxName.Text = item.NameGrap;
+                            ComboBoxProekt.Text = item.ProjectGrap;
                         }
                         return x;
                     }
                     catch
                     {
-                        string x = "";
                         return x;
                     }
-                case "Служебные":
+                case "Документы":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
-                        dbaccess.Dbselect("SELECT [nameserv], [note], [data_add] FROM [service] WHERE [nameserv] = '" + index + "'");
-                        string x = "";
-                        for (int i = 0; i < dbaccess.Querydata.Count; ++i)
+                        foreach (Services item in State.servicesColl.Where(item => item.NameServ == index))
                         {
-                            string[] vs = dbaccess.Querydata[i];
-                            x = "Служебная: " + vs[0] + "\n" + "Короткое описание: " + vs[1] + "\n" + "Дата добавления: " + vs[2];
-                            ComboBoxIndex.Text = vs[0];
-                            ComboBoxName.Text = vs[1];
+                            x = item.ToString();
+                            ComboBoxIndex.Text = item.NameServ;
+                            ComboBoxName.Text = item.Note;
                         }
                         return x;
                     }
                     catch
                     {
-                        string x = "";
                         return x;
                     }
                 default: string z = ""; return z;
@@ -655,14 +535,14 @@ namespace Fttd
         /// <returns>Данные детали строкой</returns>
         public string GetNoteFiles(string index, string filename)
         {
+            Dbaccess dbaccess = new Dbaccess();
+            string x = "";
             switch (TextBlock_type.Text)
             {
                 case "Детали":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [detail_index], [detail_name], [file_name], [file_type], [file_dir], [file_note], [data_add] FROM [stack_files] WHERE [detail_index] = '" + index + "' AND [file_name] = '" + filename + "'");
-                        string x = "";
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
@@ -674,13 +554,11 @@ namespace Fttd
                         }
                         return x;
                     }
-                    catch { string x = ""; return x; } 
+                    catch { return x; }
                 case "Приспособления":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [indexdev], [file_name], [file_type], [file_dir], [file_note], [data_add] FROM [device_files] WHERE [indexdev] = '" + index + "' AND [file_name] = '" + filename + "'");
-                        string x = "";
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
@@ -692,13 +570,11 @@ namespace Fttd
                         }
                         return x;
                     }
-                    catch { string x = ""; return x; }
+                    catch { return x; }
                 case "Задания":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [task], [dir], [note] FROM [task] WHERE [task] = '" + index + "'");
-                        string x = "";
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
@@ -709,16 +585,14 @@ namespace Fttd
                         }
                         return x;
                     }
-                    catch { string x = ""; return x; }
+                    catch { return x; }
                 case "Проекты":
                     string y = "";
-                    return y; 
+                    return y;
                 case "Графики":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [namegrap], [dir], [data_add] FROM [graphics] WHERE [namegrap] = '" + index + "'");
-                        string x = "";
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
@@ -729,30 +603,26 @@ namespace Fttd
                         }
                         return x;
                     }
-                    catch { string x = ""; return x; }
-                case "Служебные":
+                    catch { return x; }
+                case "Документы":
                     try
                     {
-                        Dbaccess dbaccess = new Dbaccess();
                         dbaccess.Dbselect("SELECT [nameserv], [dir], [note], [data_add] FROM [service] WHERE [nameserv] = '" + index + "'");
-                        string x = "";
                         for (int i = 0; i < dbaccess.Querydata.Count; ++i)
                         {
                             string[] vs = dbaccess.Querydata[i];
                             string fn = "";
                             string tp = "";
-                            if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Служебная"; }
+                            if (vs[1] != "") { fn = new DirectoryInfo(vs[1]).Name; tp = "Документы"; }
                             x = "Описание файла\nНазвание файла: " + fn + "\n" + "Тип файла: " + tp + "\n" + "Примечание: " + vs[2] + "\n" + "Дата добавления: " + vs[3];
                         }
                         return x;
                     }
-                    catch { string x = ""; return x; }
+                    catch { return x; }
                 default:
                     string z = "";
                     return z;
             }
-
-;
         }
 
         // Кнопка выход
@@ -764,6 +634,11 @@ namespace Fttd
         // Перетаскивание окна
         private void Grid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            if (e.ClickCount == 3)
+            {
+                if (this.WindowState != WindowState.Maximized) this.WindowState = WindowState.Maximized;
+                else this.WindowState = WindowState.Normal;
+            }
             try { this.DragMove(); }
             catch { }
         }
@@ -771,6 +646,8 @@ namespace Fttd
         // Кнопка настройки
         private void Button_settings_Click(object sender, RoutedEventArgs e)
         {
+            Taskb.ShowCustomBalloon(State.GridMessage(Taskb, State.messageColl.LastOrDefault().ToString()), PopupAnimation.Slide, null);
+
             switch (SettingsBar.Width.Value)
             {
                 case 0: SettingsBar.Width = new GridLength(value: 250, type: GridUnitType.Pixel); break;
@@ -778,19 +655,17 @@ namespace Fttd
                 default: break;
             }
         }
-        
+
         // Кнопка в настройках добавления файла базы данных
         private void ButtonAddDB_Click(object sender, RoutedEventArgs e)
         {
             WinForms.OpenFileDialog openFile = new WinForms.OpenFileDialog();
             openFile.ShowDialog();
-            string dir = openFile.FileName;
-            TextBoxBD.Text = dir;
-            Param_in param = new Param_in();
-            param.SetDirDB(dir);
+            State.DirDb = openFile.FileName;
+            TextBoxBD.Text = State.DirDb;
             MessageBox.Show("После изменения файла базы данных приложение будет перезапущено.", "Изменение файла базы данных");
             this.Close();
-            System.Diagnostics.Process.Start(@"Fttd.exe");
+            Process.Start(@"Fttd.exe");
         }
 
         // Кнопка в настройках добавления базовой директории
@@ -798,10 +673,8 @@ namespace Fttd
         {
             WinForms.FolderBrowserDialog folder = new WinForms.FolderBrowserDialog();
             folder.ShowDialog();
-            string dir = folder.SelectedPath;
-            TextBoxDir.Text = dir;
-            Param_in param = new Param_in();
-            param.SetDirFiles(dir);
+            State.DirFiles = folder.SelectedPath;
+            TextBoxDir.Text = State.DirFiles;
             MessageBox.Show("После изменения базовой директории приложение будет перезапущено.", "Изменение Базовой директории");
             this.Close();
             System.Diagnostics.Process.Start(@"Fttd.exe");
@@ -817,7 +690,13 @@ namespace Fttd
         //Кнопка свернуть окно
         private void Button_minimized_Click(object sender, RoutedEventArgs e)
         {
-            this.WindowState = WindowState.Minimized;
+            if (this.WindowState == WindowState.Minimized)
+            {
+                this.ShowInTaskbar = true;
+                this.WindowState = WindowState.Normal;
+                this.Activate();                
+            }
+            else { this.WindowState = WindowState.Minimized; this.ShowInTaskbar = false; }
         }
 
         // Кнопка открытия меню добавления детали
@@ -828,10 +707,10 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 390; break;
+                case "Задания": x = 450; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
-                case "Служебные": x = 280; break;
+                case "Документы": x = 280; break;
                 default: break;
             }
             if (RowDetail.Height.Value == x)
@@ -862,10 +741,10 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 390; break;
+                case "Задания": x = 450; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
-                case "Служебные": x = 280; break;
+                case "Документы": x = 280; break;
                 default: break;
             }
             if (RowDetail.Height.Value == x)
@@ -889,7 +768,7 @@ namespace Fttd
                 ComboBoxNPU.IsEnabled = false;
                 TextBoxDirFile.IsEnabled = true;
                 ButtonAddFile.IsEnabled = true;
-            }            
+            }
         }
 
         // Кнопка открытия меню удаления детали
@@ -900,10 +779,10 @@ namespace Fttd
             {
                 case "Детали": x = 460; break;
                 case "Приспособления": x = 280; break;
-                case "Задания": x = 390; break;
+                case "Задания": x = 450; break;
                 case "Проекты": x = 160; break;
                 case "Графики": x = 280; break;
-                case "Служебные": x = 280; break;
+                case "Документы": x = 280; break;
                 default: break;
             }
             if (RowDetail.Height.Value == x)
@@ -937,7 +816,7 @@ namespace Fttd
                 ComboBoxRazrab.IsEnabled = false;
                 TextBoxDirFile.IsEnabled = false;
                 ButtonAddFile.IsEnabled = false;
-            }         
+            }
         }
 
         // Кнопка открытия меню добавления файла
@@ -1038,62 +917,80 @@ namespace Fttd
         {
             try
             {
+                Dbaccess dbaccess = new Dbaccess();
                 switch (TextBlock_type.Text)
                 {
                     case "Детали":
                         if (ComboBoxIndex.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
                             dbaccess.Dbinsert("detail_db", "[detail_index], [detail_name], [inventory], [number_task], [project], [razrabotal]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + ComboBoxNPU.Text + "', '" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + ComboBoxRazrab.Text + "'");
-                            TreeviewSet();
                         }
                         else { MessageBox.Show("Ведите название детали", "Ошибка"); }
                         break;
                     case "Приспособления":
                         if (ComboBoxIndex.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
                             dbaccess.Dbinsert("device", "[indexdev], [namedev], [razrab]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + ComboBoxRazrab.Text + "'");
-                            TreeviewSet();
                         }
                         else { MessageBox.Show("Ведите название приспособления", "Ошибка"); }
                         break;
                     case "Задания":
-                        if (ComboBoxZad.Text != "" && TextBoxDirFile.Text != "" && ComboBoxProekt.Text != "")
+                        if (ComboBoxZad.Text != "" && ComboBoxProekt.Text != "")
                         {
                             if (ComboBoxZad.Items.Contains(ComboBoxZad.Text))
                             {
-                                    MessageBox.Show("Укажите новое задание", "Ошибка"); 
+                                MessageBox.Show("Задание уже есть в базе, будет изменена только актуальность, ответственный и добавлен файл", "Ошибка");
+                                if (TextBoxDirFile.Text != "")
+                                {
+                                    try
+                                    {
+                                        AllFiles file = new AllFiles("Задания", TextBoxDirFile.Text);
+                                        if (File.Exists(file.File_dir_in))
+                                        {
+                                            MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию", "Ошибка");
+                                        }
+                                        else
+                                        {
+                                            file.Copy_file();
+                                        }
+                                        dbaccess.DbRead("UPDATE [task] SET [dir] = '" + file.File_dir_in_short + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
+                                    }
+                                    catch { }
+                                }
+                                string leading;
+                                try { leading = State.employeeColl.First(item => item.ShortName.Contains(ComboBoxRazrab.Text)).ShortName; }
+                                catch (Exception) { leading = "Нет"; }
+                                dbaccess.DbRead("UPDATE [task] SET [iscurrent] = " + chTaskIsCurrent.IsChecked.Value + ", [leading] = '" + leading + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
                             }
                             else
                             {
                                 try
                                 {
-                                    Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "Задание", new DirectoryInfo(TextBoxDirFile.Text).Name);
-                                    if (File.Exists(work.Dir_file_copy_in))
+                                    AllFiles file = new AllFiles("Задания", TextBoxDirFile.Text);
+                                    if (File.Exists(file.File_dir_in))
                                     {
-                                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
+                                        MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию", "Ошибка");
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(work.Dir_copy_in + "\\Задания");
-                                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                        file.Copy_file();
                                     }
-                                    Dbaccess dbaccess = new Dbaccess();
-                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent]) VALUES ('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + TextBoxDirFile.Text + "', '" + data1.Text + "', '" + data2.Text + "', " + chTaskIsCurrent.IsChecked.Value + ")");
-                                    TreeviewSet();
+                                    string leading;
+                                    try { leading = State.employeeColl.First(item => item.ShortName.Contains(ComboBoxRazrab.Text)).ShortName; }
+                                    catch (Exception) { leading = "Нет"; }
+                                    dbaccess.DbRead("INSERT INTO [task] ([task], [project], [dir], [datein], [dateout], [iscurrent], [leading]) VALUES " +
+                                        "('" + ComboBoxZad.Text + "', '" + ComboBoxProekt.Text + "', '" + file.File_dir_in_short + "', '" + data1.Text + "', '" + data2.Text + "', " +
+                                        chTaskIsCurrent.IsChecked.Value + ", '" + leading + "')");
                                 }
-                                catch (Exception ex){ MessageBox.Show(ex + "", "Ошибка"); }
+                                catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
                         }
-                        else { MessageBox.Show("Ведите номер задания, выберите проект и укажите файл","Ошибка"); }
+                        else { MessageBox.Show("Ведите номер задания, выберите проект и укажите файл", "Ошибка"); }
                         break;
                     case "Проекты":
                         if (ComboBoxProekt.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
                             dbaccess.Dbinsert("project", "[project]", "'" + ComboBoxProekt.Text + "'");
-                            TreeviewSet();
                         }
                         else { MessageBox.Show("Ведите проект", "Ошибка"); }
                         break;
@@ -1108,59 +1005,55 @@ namespace Fttd
                             {
                                 try
                                 {
-                                    Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "График", new DirectoryInfo(TextBoxDirFile.Text).Name);
-                                    if (File.Exists(work.Dir_file_copy_in))
+                                    AllFiles file = new AllFiles("Графики", TextBoxDirFile.Text);
+                                    if (File.Exists(file.File_dir_in))
                                     {
-                                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
+                                        MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(work.Dir_copy_in + "\\Графики");
-                                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                        file.Copy_file();
                                     }
-                                    Dbaccess dbaccess = new Dbaccess();
-                                    dbaccess.Dbinsert("graphics", "[namegrap], [project], [dir]", "'" + ComboBoxName.Text + "', '" + ComboBoxProekt.Text + "', '" + TextBoxDirFile.Text + "'");
-                                    TreeviewSet();
+                                    dbaccess.Dbinsert("graphics", "[namegrap], [project], [dir]", "'" + ComboBoxName.Text + "', '" + ComboBoxProekt.Text + "', '" + file.File_dir_in_short + "'");
                                 }
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
                         }
                         else { MessageBox.Show("Ведите название графика, выберите проект и укажите файл", "Ошибка"); }
                         break;
-                    case "Служебные":
+                    case "Документы":
                         if (ComboBoxIndex.Text != "" && ComboBoxName.Text != "" && TextBoxDirFile.Text != "")
                         {
                             if (ComboBoxIndex.Items.Contains(ComboBoxIndex.Text))
                             {
-                                MessageBox.Show("Укажите новую служебную", "Ошибка");
+                                MessageBox.Show("Укажите новый документ", "Ошибка");
                             }
                             else
                             {
                                 try
                                 {
-                                    Work_with_files work = new Work_with_files(TextBoxDirFile.Text, "", "", "Служебная", new DirectoryInfo(TextBoxDirFile.Text).Name);
-                                    if (File.Exists(work.Dir_file_copy_in))
+                                    AllFiles file = new AllFiles("Документы", TextBoxDirFile.Text);
+                                    if (File.Exists(file.File_dir_in))
                                     {
-                                        MessageBox.Show(work.Dir_file_copy_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
+                                        MessageBox.Show(file.File_dir_in + "Файл уже есть в базе, он будет привязан к заданию.", "Ошибка");
                                     }
                                     else
                                     {
-                                        Directory.CreateDirectory(work.Dir_copy_in + "\\Служебные");
-                                        File.Copy(work.Dir_file_copy_out, work.Dir_file_copy_in);
+                                        file.Copy_file();
                                     }
-                                    Dbaccess dbaccess = new Dbaccess();
-                                    dbaccess.Dbinsert("service", "[nameserv], [note], [dir]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + TextBoxDirFile.Text + "'");
-                                    TreeviewSet();
+                                    dbaccess.Dbinsert("service", "[nameserv], [note], [dir]", "'" + ComboBoxIndex.Text + "', '" + ComboBoxName.Text + "', '" + file.File_dir_in_short + "'");
                                 }
                                 catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
                             }
                         }
-                        else { MessageBox.Show("Ведите номер служебной, краткое описание и укажите файл", "Ошибка"); }
+                        else { MessageBox.Show("Ведите номер документа, краткое описание и укажите файл", "Ошибка"); }
                         break;
                     default: break;
-                }               
+                }
+                State.stateTreeView = true;
+                TreeviewSet();
             }
-            catch(Exception ex) { MessageBox.Show(ex +"", "Ошибка"); }
+            catch (Exception ex) { MessageBox.Show(ex + "", "Ошибка"); }
         }
 
         // Кнопка изменения детали
@@ -1168,58 +1061,41 @@ namespace Fttd
         {
             try
             {
+                Dbaccess dbaccess = new Dbaccess();
                 switch (TextBlock_type.Text)
                 {
                     case "Детали":
                         if (ComboBoxIndex.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
-                            dbaccess.DbRead("UPDATE [detail_db] SET [detail_name] = '" + ComboBoxName.Text + "', [number_task] = '" + ComboBoxZad.Text + "', [project] = '" + ComboBoxProekt.Text + "', [razrabotal] = '" + ComboBoxRazrab.Text + "' WHERE [detail_index] = '" + ComboBoxIndex.Text + "' AND [inventory] = '" + ComboBoxNPU.Text + "'");
-                            TreeviewSet();
+                            dbaccess.DbRead("UPDATE [detail_db] SET [detail_name] = '" + ComboBoxName.Text + "', [number_task] = '" + ComboBoxZad.Text + "', [project] = '" + ComboBoxProekt.Text + "', [razrabotal] = '" + ComboBoxRazrab.Text + "' WHERE [detail_index] = '" + ComboBoxIndex.Text + "' AND [inventory] = " + Convert.ToDouble(ComboBoxNPU.Text) + "");
                         }
                         else { MessageBox.Show("Выберите деталь", "Ошибка"); }
                         break;
                     case "Приспособления":
                         if (ComboBoxIndex.Text != "")
-                        {                      
-                            Dbaccess dbaccess = new Dbaccess();
-                            dbaccess.DbRead("UPDATE [device] SET [namedev] = '" + ComboBoxName.Text + "', [razrabotal] = '" + ComboBoxRazrab.Text + "' WHERE [indexdev] = '" + ComboBoxIndex.Text + "'");
-                            TreeviewSet();
+                        {
+                            dbaccess.DbRead("UPDATE [device] SET [namedev] = '" + ComboBoxName.Text + "', [razrab] = '" + ComboBoxRazrab.Text + "' WHERE [indexdev] = '" + ComboBoxIndex.Text + "'");
                         }
                         else { MessageBox.Show("Ведите название приспособления", "Ошибка"); }
-                        break;
-                    case "Задания":
-                        if (ComboBoxZad.Text != "")
-                        {
-                            Dbaccess dbaccess = new Dbaccess();
-                            dbaccess.DbRead("UPDATE [task] SET [project] = '" + ComboBoxProekt.Text + "', [dir] = '" + TextBoxDirFile.Text + "' WHERE [task] = '" + ComboBoxZad.Text + "'");
-                            TreeviewSet();
-                        }
-                        else { MessageBox.Show("Выберите задание", "Ошибка"); }
-                        break;
-                    case "Проекты":
-                        MessageBox.Show("Проект изменить нельзя", "Ошибка"); 
                         break;
                     case "Графики":
                         if (ComboBoxName.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
-                            dbaccess.DbRead("UPDATE [graphics] SET [project] = '" + ComboBoxProekt.Text + "', [dir] = '" + TextBoxDirFile.Text + "' WHERE [namegrap] = '" + ComboBoxName.Text + "'");
-                            TreeviewSet();
+                            dbaccess.DbRead("UPDATE [graphics] SET [project] = '" + ComboBoxProekt.Text + "' WHERE [namegrap] = '" + ComboBoxName.Text + "'");
                         }
                         else { MessageBox.Show("Выберите график", "Ошибка"); }
                         break;
-                    case "Служебные":
+                    case "Документы":
                         if (ComboBoxIndex.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
-                            dbaccess.DbRead("UPDATE [service] SET [note] = '" + ComboBoxName.Text + "', [dir] = '" + TextBoxDirFile.Text + "' WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
-                            TreeviewSet();
+                            dbaccess.DbRead("UPDATE [service] SET [note] = '" + ComboBoxName.Text + "' WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
                         }
-                        else { MessageBox.Show("Выберите служебную", "Ошибка"); }
+                        else { MessageBox.Show("Выберите документ", "Ошибка"); }
                         break;
                     default: break;
                 }
+                State.stateTreeView = true;
+                TreeviewSet();
             }
             catch { }
         }
@@ -1229,52 +1105,49 @@ namespace Fttd
         {
             try
             {
+                Dbaccess dbaccess = new Dbaccess();
                 switch (TextBlock_type.Text)
                 {
                     case "Детали":
                         if (ComboBoxIndex.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
-                            dbaccess.DbRead("DELETE FROM [detail_db] WHERE [detail_index] = '" + ComboBoxIndex.Text + "' AND [inventory] = '" + ComboBoxNPU.Text + "'");
-                            TreeviewSet();
+                            dbaccess.DbRead("DELETE FROM [detail_db] WHERE [detail_index] = '" + ComboBoxIndex.Text + "' AND [inventory] = " + ComboBoxNPU.Text + "");
                         }
                         else { MessageBox.Show("Выберите деталь", "Ошибка"); }
                         break;
                     case "Приспособления":
                         if (ComboBoxIndex.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
                             dbaccess.DbRead("DELETE FROM [device] WHERE [indexdev] = '" + ComboBoxIndex.Text + "'");
-                            TreeviewSet();
                         }
                         else { MessageBox.Show("Выберите приспособление", "Ошибка"); }
-                        break;
-                    case "Задания":
-                        MessageBox.Show("Задание можно удалить только через администратора", "Ошибка");
-                        break;
-                    case "Проекты":
-                        MessageBox.Show("Проект можно удалить только через администратора", "Ошибка");
                         break;
                     case "Графики":
                         if (ComboBoxName.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
-                            dbaccess.DbRead("DELETE FROM [graphics] WHERE [namegrap] = '" + ComboBoxName.Text + "'");
-                            TreeviewSet();
+                            try
+                            {
+                                File.Delete(@"" + State.DirFiles + "\\" + State.graphicsColl.First(item => item.NameGrap.Contains(ComboBoxName.Text)).DirGrap + "");
+                                MessageBox.Show("Файл успешно удалён.", "Удаление");
+                                dbaccess.DbRead("DELETE FROM [graphics] WHERE [namegrap] = '" + ComboBoxName.Text + "'");
+                            }
+                            catch { }
                         }
                         else { MessageBox.Show("Выберите график", "Ошибка"); }
                         break;
-                    case "Служебные":
+                    case "Документы":
                         if (ComboBoxIndex.Text != "")
                         {
-                            Dbaccess dbaccess = new Dbaccess();
+                            File.Delete(@"" + State.DirFiles + "\\" + State.servicesColl.First(item => item.NameServ.Contains(ComboBoxIndex.Text)).DirServ + "");
+                            MessageBox.Show("Файл успешно удалён.", "Удаление");
                             dbaccess.DbRead("DELETE FROM [service] WHERE [nameserv] = '" + ComboBoxIndex.Text + "'");
-                            TreeviewSet();                            
                         }
-                        else { MessageBox.Show("Выберите служебную", "Ошибка"); }
+                        else { MessageBox.Show("Выберите документ", "Ошибка"); }
                         break;
                     default: break;
                 }
+                State.stateTreeView = true;
+                TreeviewSet();
             }
             catch { }
         }
@@ -1285,7 +1158,7 @@ namespace Fttd
             OpenFileDialog openFile = new OpenFileDialog();
             openFile.ShowDialog();
             string dir = openFile.FileName;
-            if (dir !="")
+            if (dir != "")
             {
                 TextBoxFiles.Text = dir;
                 TextBoxNameFiles.Text = new DirectoryInfo(dir).Name;
@@ -1302,7 +1175,6 @@ namespace Fttd
                 var cellContent = selectedCell.Column.GetCellContent(selectedCell.Item);
                 string textDataGrid = (cellContent as TextBlock).Text;
                 string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
-
                 switch (TextBlock_type.Text)
                 {
                     case "Детали":
@@ -1322,12 +1194,12 @@ namespace Fttd
         {
             try
             {
+                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                 switch (TextBlock_type.Text)
                 {
                     case "Детали":
                         try
                         {
-                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                             string[] name = textItem.Split('|');
                             CopyFile(TextBoxFiles.Text, name[1], name[0], TextBoxNameFiles.Text, ComboBoxTypeFiles.Text, TextBoxNote.Text);
                         }
@@ -1336,7 +1208,6 @@ namespace Fttd
                     case "Приспособления":
                         try
                         {
-                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                             CopyFile(TextBoxFiles.Text, textItem, "Приспособление", TextBoxNameFiles.Text, ComboBoxTypeFiles.Text, TextBoxNote.Text);
                         }
                         catch { }
@@ -1353,14 +1224,14 @@ namespace Fttd
         {
             try
             {
+                Dbaccess dbaccess = new Dbaccess();
+                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                 switch (TextBlock_type.Text)
                 {
                     case "Детали":
                         try
                         {
-                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                             string[] name = textItem.Split('|');
-                            Dbaccess dbaccess = new Dbaccess();
                             dbaccess.DbRead("UPDATE [stack_files] SET [file_type] = '" + ComboBoxTypeFiles.Text + "', [file_note] = '" + TextBoxNote.Text + "' WHERE [detail_index] = '" + name[1] + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
                         }
                         catch { }
@@ -1368,8 +1239,6 @@ namespace Fttd
                     case "Приспособления":
                         try
                         {
-                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
-                            Dbaccess dbaccess = new Dbaccess();
                             dbaccess.DbRead("UPDATE [device_files] SET [file_type] = '" + ComboBoxTypeFiles.Text + "', [file_note] = '" + TextBoxNote.Text + "' WHERE [indexdev] = '" + textItem + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
                         }
                         catch { }
@@ -1386,30 +1255,28 @@ namespace Fttd
         {
             try
             {
+                Dbaccess dbaccess = new Dbaccess();
+                string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                 switch (TextBlock_type.Text)
                 {
                     case "Детали":
                         try
                         {
-                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
                             string[] name = textItem.Split('|');
-                            Dbaccess dbaccess = new Dbaccess();
                             dbaccess.DbRead("DELETE FROM [stack_files] WHERE [detail_index] = '" + name[1] + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
                             if (ComboBoxTypeFiles.Text == "Задание")
                             { MessageBox.Show("Файл задания может быть привязан к другим деталям. Привязка к данной детали будет удалена.", "Удаление"); }
-                            else { Param_in param = new Param_in(); File.Delete(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
+                            else { File.Delete(@"" + State.DirFiles + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
                         }
                         catch { }
                         break;
                     case "Приспособления":
                         try
                         {
-                            string textItem = (TreeViewDet.SelectedItem as TextBlock).Text;
-                            Dbaccess dbaccess = new Dbaccess();
                             dbaccess.DbRead("DELETE FROM [device_files] WHERE [indexdev] = '" + textItem + "' AND [file_dir] = '" + TextBoxFiles.Text + "'");
                             if (ComboBoxTypeFiles.Text == "Задание")
                             { MessageBox.Show("Файл задания может быть привязан к другим деталям. Привязка к данной детали будет удалена.", "Удаление"); }
-                            else { Param_in param = new Param_in(); File.Delete(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
+                            else { File.Delete(@"" + State.DirFiles + "\\" + TextBoxFiles.Text + ""); MessageBox.Show("Файл успешно удалён.", "Удаление"); }
                         }
                         catch { }
                         break;
@@ -1437,8 +1304,7 @@ namespace Fttd
                         {
                             string[] name = textItem.Split('|');
                             TextBlockPF.Text = GetNoteFiles(name[1], textDataGrid);
-                            Param_in param = new Param_in();
-                            Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
+                            Process.Start(@"" + State.DirFiles + "\\" + TextBoxFiles.Text + "");
                         }
                         catch { }
                         break;
@@ -1446,37 +1312,34 @@ namespace Fttd
                         try
                         {
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Param_in param = new Param_in();
-                            Process.Start(@"" + param.GetDirFiles() + "\\" + TextBoxFiles.Text + "");
+                            Process.Start(@"" + State.DirFiles + TextBoxFiles.Text + "");
                         }
                         catch { }
                         break;
                     case "Задания":
                         try
                         {
+                            string dir = State.taskColl.First(item => item.TaskDir.Contains(textDataGrid)).TaskDir;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Param_in param = new Param_in();
-                            Process.Start(@"" + param.GetDirFiles() + "\\Задания\\" + textDataGrid + "");
+                            Process.Start(@"" + State.DirFiles + dir + "");
                         }
                         catch { }
-                        break;
-                    case "Проекты":
                         break;
                     case "Графики":
                         try
                         {
+                            string dir = State.graphicsColl.First(item => item.DirGrap.Contains(textDataGrid)).DirGrap;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Param_in param = new Param_in();
-                            Process.Start(@"" + param.GetDirFiles() + "\\Графики\\" + textDataGrid + "");
+                            Process.Start(@"" + State.DirFiles + dir + "");
                         }
                         catch { }
                         break;
-                    case "Служебные":
+                    case "Документы":
                         try
                         {
+                            string dir = State.servicesColl.First(item => item.DirServ.Contains(textDataGrid)).DirServ;
                             TextBlockPF.Text = GetNoteFiles(textItem, textDataGrid);
-                            Param_in param = new Param_in();
-                            Process.Start(@"" + param.GetDirFiles() + "\\Служебные\\" + textDataGrid + "");
+                            Process.Start(@"" + State.DirFiles + dir + "");
                         }
                         catch { }
                         break;
@@ -1484,37 +1347,6 @@ namespace Fttd
                 }
             }
             catch { }
-
-        }
-
-        //    //var bc = new BrushConverter();
-        //    //grid0.Background = (Brush)bc.ConvertFrom("#FF7AB9D1");
-        //    //grid1.Background = (Brush)bc.ConvertFrom("#FF157599");
-        //    //grid2.Background = (Brush)bc.ConvertFrom("#FF7AB9D1");
-        //    //grid3.Background = (Brush)bc.ConvertFrom("#FF7AB9D1");
-        //    //DataGridFiles.Background = (Brush)bc.ConvertFrom("#FF7AB9D1");
-        //    //DataGridFiles.AlternatingRowBackground = (Brush)bc.ConvertFrom("#FF7AB9D1");
-
-
-
-        // Чекбокс отображения меню включен(отображение по проектам) 
-        private void CheckBoxTreeViewSet_Checked(object sender, RoutedEventArgs e)
-        {
-            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            var entry = config.AppSettings.Settings["CheckBoxTreeViewSet"];
-            if (entry == null) config.AppSettings.Settings.Add("CheckBoxTreeViewSet", "true");
-            else config.AppSettings.Settings["CheckBoxTreeViewSet"].Value = "true";
-            config.Save(ConfigurationSaveMode.Modified);
-        }
-
-        // Чекбокс отображения меню выключен(отображение по деталям) 
-        private void CheckBoxTreeViewSet_Unchecked(object sender, RoutedEventArgs e)
-        {
-            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            var entry = config.AppSettings.Settings["CheckBoxTreeViewSet"];
-            if (entry == null) config.AppSettings.Settings.Add("CheckBoxTreeViewSet", "false");
-            else config.AppSettings.Settings["CheckBoxTreeViewSet"].Value = "false";
-            config.Save(ConfigurationSaveMode.Modified);
         }
 
         // Действие при выборе пункта "Задание" в меню добавление файла
@@ -1538,27 +1370,15 @@ namespace Fttd
                     TextBlockFile.Text = "Файл";
                 }
             }
-            catch { }  
+            catch { }
         }
 
         // Действие при выборе номера задания в меню добавление файла (пункт "задание")
         private void ComboBoxTask_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            string task = ComboBoxTask.SelectedItem.ToString();
-            Dbaccess dbaccess = new Dbaccess();
-            dbaccess.Dbselect("SELECT [task], [dir] FROM [task] WHERE [task] = '"+ task + "'");
-            for (int i = 0; i < dbaccess.Querydata.Count; ++i)
-            {
-                string[] vs = dbaccess.Querydata[i];
-                TextBoxFiles.Text = (vs[1]);
-                if(TextBoxFiles.Text != "") TextBoxNameFiles.Text = new DirectoryInfo(vs[1]).Name;
-            }
-        }
-
-        //Действие при изменении чекбокса в настройках отображения по проектам
-        private void CheckBoxTreeViewSet_Click(object sender, RoutedEventArgs e)
-        {
-            TreeviewSet();
+            TextBoxFiles.Text = State.taskColl.First(item => item.TaskName.Contains(ComboBoxTask.SelectedItem.ToString())).TaskDir;
+            if (TextBoxFiles.Text != "") TextBoxNameFiles.Text =
+                new DirectoryInfo(State.taskColl.First(item => item.TaskName.Contains(ComboBoxTask.SelectedItem.ToString())).TaskDir).Name;
         }
 
         //Кнопка отображения деталей
@@ -1576,7 +1396,8 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = true;
             ButtonReadFiles.IsEnabled = true;
             ButtonRemoveFiles.IsEnabled = true;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
+            RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
             ButtonRemoveDetail.Visibility = Visibility.Visible;
@@ -1597,7 +1418,8 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = true;
             ButtonReadFiles.IsEnabled = true;
             ButtonRemoveFiles.IsEnabled = true;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
+            RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
             ButtonRemoveDetail.Visibility = Visibility.Visible;
@@ -1610,8 +1432,8 @@ namespace Fttd
         {
             TextBlock_type.Text = "Задания";
             TreeviewSet();
-            int[] a = { 0, 0, 60, 60, 0, 0, 60, 80, 30, 60 };
-            string[] b = { "Добавить задание", "Изменить задание", "Удалить задание", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            int[] a = { 0, 0, 60, 60, 0, 60, 60, 80, 30, 60 };
+            string[] b = { "Добавить задание", "Изменить задание", "Удалить задание", "Индекс детали", "Название детали", "Задание", "Проект", "№ Плана управления", "Ответственный" };
             ReadAddPanel(a, b);
             ComboBoxProekt.IsEditable = false;
             ComboBoxZad.IsEditable = true;
@@ -1620,7 +1442,8 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
+            RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
             ButtonRemoveDetail.Visibility = Visibility.Visible;
@@ -1642,7 +1465,8 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
+            RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
             ButtonRemoveDetail.Visibility = Visibility.Visible;
@@ -1664,7 +1488,8 @@ namespace Fttd
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
+            RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
             ButtonRemoveDetail.Visibility = Visibility.Visible;
@@ -1672,20 +1497,21 @@ namespace Fttd
             ButtonRemoveDetail.IsEnabled = true;
         }
 
-        //Кнопка отображения служебных
+        //Кнопка отображения документов
         private void Button_service_Click(object sender, RoutedEventArgs e)
         {
-            TextBlock_type.Text = "Служебные";
+            TextBlock_type.Text = "Документы";
             TreeviewSet();
             int[] a = { 60, 60, 0, 0, 0, 0, 60, 0, 0, 60 };
-            string[] b = { "Добавить служебную", "Изменить служебную", "Удалить служебную", "Номер служебной", "Короткое описание", "Задание", "Проект", "№ Плана управления", "Разработал" };
+            string[] b = { "Добавить документ", "Изменить документ", "Удалить документ", "Номер документа", "Короткое описание", "Задание", "Проект", "№ Плана управления", "Разработал" };
             ReadAddPanel(a, b);
             DataGridFiles.ItemsSource = null;
             DataGridFiles.Items.Refresh();
             ButtonAddFiles.IsEnabled = false;
             ButtonReadFiles.IsEnabled = false;
             ButtonRemoveFiles.IsEnabled = false;
-            RowDetail.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
+            RowDetail.Height = new GridLength(value: 45, type: GridUnitType.Pixel);
+            RowFiles.Height = new GridLength(value: 40, type: GridUnitType.Pixel);
             ButtonAddDetail.Visibility = Visibility.Visible;
             ButtonReadDetail.Visibility = Visibility.Visible;
             ButtonRemoveDetail.Visibility = Visibility.Visible;
@@ -1721,7 +1547,7 @@ namespace Fttd
             TextBlockRazrab.Text = b[8];
         }
 
-        // Кнопка добавления директории файла
+        // Кнопка добавления директории файла в меню добавления задания\документов\графиков
         private void ButtonAddFile_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFile = new OpenFileDialog();
@@ -1731,6 +1557,127 @@ namespace Fttd
             {
                 TextBoxDirFile.Text = dir;
             }
+        }
+
+        // Кнопка открытия активных заданий
+        private void CurrentTask_Click(object sender, RoutedEventArgs e)
+        {
+            Window1 windowTask = new Window1();
+            windowTask.Show();
+        }
+
+        private void TechnologyList_Click(object sender, RoutedEventArgs e)
+        {
+            Window2 window = new Window2();
+            window.Show();
+        }
+
+        private void Button_update_Click(object sender, RoutedEventArgs e)
+        {
+            State.stateTreeView = true;
+            TreeviewSet();
+            State.UpdateMessageColl();
+            ChatBox.Items.Clear();
+            FillChatBox();
+        }
+
+        private void TextBox_Search_KeyUp(object sender, KeyEventArgs e)
+        {
+            TreeViewDet.Items.Clear();
+            if (TextBox_Search.Text != "" && TextBox_Search.Text != " ")
+            {
+                switch (TextBlock_type.Text)
+                {
+                    case "Детали":
+                        foreach (Detail item in State.detailColl.Where(item => item.DetailName.Contains(TextBox_Search.Text) || item.Index.Contains(TextBox_Search.Text)))
+                        {
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.DetailName + '|' + item.Index;
+                            TreeViewDet.Items.Add(IT2);
+                        }
+                        break;
+                    case "Приспособления":
+                        foreach (Device item in State.deviceColl.Where(item => item.DeviceIndex.Contains(TextBox_Search.Text) || item.DeviceName.Contains(TextBox_Search.Text)))
+                        {
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.DeviceIndex;
+                            TreeViewDet.Items.Add(IT2);
+                        }
+                        break;
+                    case "Задания":
+                        foreach (TaskDet item in State.taskColl.Where(item => item.TaskName.Contains(TextBox_Search.Text)))
+                        {
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.TaskName;
+                            TreeViewDet.Items.Add(IT2);
+                        }
+                        break;
+                    case "Проекты":
+                        foreach (Project item in State.projectColl.Where(item => item.ProjectName.Contains(TextBox_Search.Text)))
+                        {
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.ProjectName;
+                            TreeViewDet.Items.Add(IT2);
+                        }
+                        break;
+                    case "Графики":
+                        foreach (Graphics item in State.graphicsColl.Where(item => item.NameGrap.Contains(TextBox_Search.Text)))
+                        {
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.NameGrap;
+                            TreeViewDet.Items.Add(IT2);
+                        }
+                        break;
+                    case "Документы":
+                        foreach (Services item in State.servicesColl.Where(item => item.NameServ.Contains(TextBox_Search.Text)))
+                        {
+                            TextBlock IT2 = new TextBlock();
+                            IT2.Text = item.NameServ;
+                            TreeViewDet.Items.Add(IT2);
+                        }
+                        break;
+                    default: break;
+                }
+            }
+            else { TreeviewSet(); }
+        }
+
+        private void RegistryTask_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(@"\\Ts-03\users\OGK\Реестр Заданий\РЕЕСТР ЗАДАНИЙ.xlsx");
+        }
+
+        private void Send_Click(object sender, RoutedEventArgs e)
+        {
+            if (ChatString.Text != "" && ChatString.Text != null)
+            {
+                SendChatBox();
+                ChatString.Clear();
+            }
+        }
+
+        private void ChatString_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                if (ChatString.Text != "" && ChatString.Text != null)
+                {
+                    SendChatBox();
+                    ChatString.Clear();
+                }
+            }
+        }
+
+        private void Chat_expand_Click(object sender, RoutedEventArgs e)
+        {
+            if (RowChat.Height != new GridLength(value: 300, type: GridUnitType.Pixel))
+            {
+                RowChat.Height = new GridLength(value: 300, type: GridUnitType.Pixel);
+            }
+            else RowChat.Height = new GridLength(value: 50, type: GridUnitType.Pixel);
+            State.UpdateMessageColl();
+            FillChatBox();
+            Chat_expand.Foreground = new SolidColorBrush(Colors.White);
         }
     }
 }

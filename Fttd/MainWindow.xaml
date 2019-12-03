@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:local="clr-namespace:Fttd"
         mc:Ignorable="d"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -13,8 +14,18 @@
         TextOptions.TextRenderingMode="Auto"        
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"        
-        Title="MainWindow" Height="700" Width="1100" WindowStartupLocation="CenterScreen" MinWidth="800" MinHeight="400" ResizeMode="CanResizeWithGrip" WindowStyle="None" AllowsTransparency="True">
+        Title="Archivist" Height="740" Width="1100" WindowStartupLocation="CenterScreen" MinWidth="800" MinHeight="400" ResizeMode="CanResizeWithGrip" WindowStyle="None" AllowsTransparency="True">
     <Grid>
+        <tb:TaskbarIcon Name="Taskb" IconSource="folderdevelopment.ico" TrayLeftMouseUp="Button_minimized_Click">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Открыть актуальные задания" Click="CurrentTask_Click"/>
+                    <MenuItem Header="Открыть список технологий" Click="TechnologyList_Click" />
+                    <MenuItem Header="Открыть реестр заданий" Click="RegistryTask_Click"/>
+                    <MenuItem Header="Выход" Click="ButtonExit_Click" />
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
         <Grid Background="#FF157599" MouseLeftButtonDown="Grid_MouseLeftButtonDown">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="326"/>
@@ -23,6 +34,35 @@
                 <ColumnDefinition Name="SettingsBar" Width="0" MaxWidth="250">
                 </ColumnDefinition>
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Name="RowChat" Height="50" MinHeight="50" MaxHeight="300"/>
+            </Grid.RowDefinitions>
+            <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" Height="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" ResizeDirection="Rows" Margin="10,0" />
+            <Grid Grid.Row="2" Grid.ColumnSpan="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="50"/>
+                </Grid.RowDefinitions>
+                <ListView Name="ChatBox" Grid.Row="0" Background="#FF7AB9D1" Foreground="#DDFFFFFF" FontWeight="Bold" Padding="10" FontSize="16" />
+                <Grid Grid.Row="1" Grid.ColumnSpan="3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="50"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" ToolTip="Сообщения" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Chat_expand_Click">
+                        <materialDesign:PackIcon Name="Chat_expand" Kind="CommentMultipleOutline" Width="25" Height="25" Foreground="#DDFFFFFF" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Button>
+                    <TextBox Name="ChatString" Grid.Column="1" Background="#FF7AB9D1" Margin="5,10,0,10" Height="30" VerticalAlignment="Bottom" KeyUp="ChatString_KeyUp" />
+                    <ComboBox Name="WhereEmployee" Grid.Column="2" Margin="5" Background="#FF7AB9D1" IsEditable="False"/>
+                    <Button Grid.Column="3" Name="Send" ToolTip="Отправить" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Send_Click" >
+                        <materialDesign:PackIcon Kind="Send" Width="30" Height="30"/>
+                    </Button>
+                </Grid>
+            </Grid>
             <Grid Name="grid3" Grid.Column="3" Background="#FF157599">
                 <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,38,0,0">
                     <TextBlock Text="База данных" Foreground="White" Margin="15,5,0,0"/>
@@ -39,135 +79,214 @@
                             <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30"/>
                         </Button>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <CheckBox Name="CheckBoxTreeViewSet" Style="{StaticResource MaterialDesignSwitchToggleButton}" Margin="10,0,0,0" Checked="CheckBoxTreeViewSet_Checked" Unchecked="CheckBoxTreeViewSet_Unchecked" Click="CheckBoxTreeViewSet_Click" />
-                        <TextBlock Text="Отображение по проектам" Foreground="White" Margin="15,5,0,0"/>
-                    </StackPanel>
-                    <TextBlock Text="FTTD v.1.1.0" Foreground="White" Margin="15,5,0,0"/>
+                    <TextBlock Text="FTTD v.1.4.0" Foreground="White" Margin="0,5,0,0" HorizontalAlignment="Center"/>
+                    <Image Source="Resources\Emb.png" Width="100" Height="100"  VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.6"/>
                 </StackPanel>
             </Grid>
             <Grid Name="grid0" Grid.Column="0" Background="#FF157599">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Name="RowDetail" Height="40"/>
+                        <RowDefinition Height="40"/>
                         <RowDefinition Height ="*"/>
-                        <RowDefinition Height ="40"/>
                     </Grid.RowDefinitions>
-                    <StackPanel Orientation="Vertical" Margin="10,10,0,0">
-                        <Grid Margin="0,0,20,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="30"/>
-                                <ColumnDefinition Width="30"/>
-                                <ColumnDefinition Width="30"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Name="ButtonAddDetail" ToolTip="Добавить деталь" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonAddDetail_Click" >
-                                <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30" />
-                            </Button>
-                            <Button Grid.Column="1" Name="ButtonReadDetail" ToolTip="Изменить деталь" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonReadDetail_Click">
-                                <materialDesign:PackIcon Kind="ArrowUpDropCircle" Width="30" Height="30"/>
-                            </Button>
-                            <Button Grid.Column="2" Name="ButtonRemoveDetail" ToolTip="Удалить деталь" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonRemoveDetail_Click">
-                                <materialDesign:PackIcon Kind="MinusCircle" Width="30" Height="30"/>
-                            </Button>
-                            <TextBlock Grid.Column="3" Name="TextBlock_type" Text="Детали" Foreground="White" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold"/>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition>
+                            <ColumnDefinition.Style>
+                                <Style TargetType="ColumnDefinition">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=ButtonMenu, Path=IsChecked}" Value="false">
+                                            <Setter Property="Width" Value="45"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ElementName=ButtonMenu, Path=IsChecked}" Value="true">
+                                            <Setter Property="Width" Value="326"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ColumnDefinition.Style>
+                        </ColumnDefinition>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <ToggleButton Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Name="ButtonMenu" ToolTip="Меню" Style="{StaticResource MaterialDesignHamburgerToggleButton}" Width="30" Height="30" Padding="0" BorderBrush="{x:Null}" Margin="7,0,0,0" Foreground="#DDFFFFFF" >
+                        <materialDesign:PackIcon Kind="HamburgerMenu" Width="30" Height="30" />
+                    </ToggleButton>
+                    <Grid Grid.Column="1" Grid.RowSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Name="RowDetail" Height="45"/>
+                            <RowDefinition Height="594*"/>
+                            <RowDefinition Height="61*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Column="0" Grid.Row="1" Grid.RowSpan="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="40"/>
+                            </Grid.RowDefinitions>
+                            <TreeView Grid.Row="0" Name="TreeViewDet" HorizontalAlignment="Stretch" Margin="0,5,10,10" VerticalAlignment="Stretch" Width="auto" Background="#FF7AB9D1" Foreground="Black" FontSize="14" Height="auto" SelectedItemChanged="TreeViewDet_SelectedItemChanged"/>
+                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                <TextBox Name="TextBox_Search" Margin="0,0,10,10" Foreground="#DD000000" Background="#FF7AB9D1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="auto" Width="233" FontSize="14" KeyUp="TextBox_Search_KeyUp"/>
+                                <materialDesign:PackIcon Kind="Search" Width="30" Height="30" Foreground="#DDFFFFFF"/>
+                            </StackPanel>
                         </Grid>
-                        <StackPanel Name="StackDetail" Orientation="Vertical" Height="500" Width="auto" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,10,10,0">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Name="rowindex" Height="60"/>
-                                    <RowDefinition Name="rowname" Height="60"/>
-                                    <RowDefinition Name="rowtask" Height="60"/>
-                                    <RowDefinition Name="rowproject" Height="60"/>
-                                    <RowDefinition Name="rownpu" Height="60"/>
-                                    <RowDefinition Name="rowrazrab" Height="60"/>
-                                    <RowDefinition Name="rowdata" Height="0"/>
-                                    <RowDefinition Name="rowcurrent" Height="0"/>
-                                    <RowDefinition Name="rowdir" Height="0"/>
-                                    <RowDefinition Name="rowbutton" Height="50"/>
-                                </Grid.RowDefinitions>
-                                <StackPanel Grid.Row="0" Orientation="Vertical">
-                                    <TextBlock Name="TextBlockIndex" Text="Индекс детали" Foreground="White" Margin="15,5,0,0"/>
-                                    <ComboBox Name="ComboBoxIndex" ToolTip="Добавлять только новые индексы или с литерой(i)" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" Foreground="Black" IsEditable="True"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Orientation="Vertical">
-                                    <TextBlock Name="TextBlockName" Text="Название детали" Foreground="White" Margin="15,5,0,0"/>
-                                    <ComboBox Name="ComboBoxName" Width="auto" Foreground="Black" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="2" Orientation="Vertical">
-                                    <TextBlock Name="TextBlockTask" Text="Задание" Foreground="White" Margin="15,5,0,0"/>
-                                    <ComboBox Name="ComboBoxZad" Width="auto" IsEnabled="{Binding ElementName=CheckBoxAddDetail, Path=IsChecked}" Foreground="Black" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="False"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="3" Orientation="Vertical">
-                                    <TextBlock Name="TextBlockProject" Text="Проект" Foreground="White" Margin="15,5,0,0"/>
-                                    <ComboBox Name="ComboBoxProekt" IsEnabled="{Binding ElementName=CheckBoxAddDetail, Path=IsChecked}" Width="auto" Foreground="Black" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="False"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="4" Orientation="Vertical">
-                                    <TextBlock Name="TextBlockNPU" Text="№ Плана управления" Foreground="White" Margin="15,5,0,0"/>
-                                    <ComboBox Name="ComboBoxNPU" IsEnabled="{Binding ElementName=CheckBoxAddDetail, Path=IsChecked}" Foreground="Black" ToolTip="Номер последнего плана управления посмотри в раскрывающемся списке" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="5" Orientation="Vertical">
-                                    <TextBlock Name="TextBlockRazrab" Text="Разработал" Foreground="White" Margin="15,5,0,0"/>
-                                    <ComboBox Name="ComboBoxRazrab" Foreground="Black" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="6" Orientation="Vertical">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Name="TextBlockData1" Text="Дата выдачи    " Foreground="White" Margin="15,15,0,0"/>
-                                        <DatePicker Name="data1" Width="150" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Foreground="White" BorderBrush="White"/>
+                        <StackPanel Grid.Row="0" Orientation="Vertical" Margin="10,10,0,0">
+                            <Grid Margin="0,0,30,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="30"/>
+                                    <ColumnDefinition Width="30"/>
+                                    <ColumnDefinition Width="30"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="1" Name="ButtonAddDetail" ToolTip="Добавить деталь" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonAddDetail_Click" >
+                                    <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30" />
+                                </Button>
+                                <Button Grid.Column="2" Name="ButtonReadDetail" ToolTip="Изменить деталь" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonReadDetail_Click">
+                                    <materialDesign:PackIcon Kind="ArrowUpDropCircle" Width="30" Height="30"/>
+                                </Button>
+                                <Button Grid.Column="3" Name="ButtonRemoveDetail" ToolTip="Удалить деталь" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonRemoveDetail_Click">
+                                    <materialDesign:PackIcon Kind="MinusCircle" Width="30" Height="30"/>
+                                </Button>
+                                <TextBlock Grid.Column="0" Name="TextBlock_type" Text="Детали" Foreground="White" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold"/>
+                            </Grid>
+                            <StackPanel Name="StackDetail" Orientation="Vertical" Height="500" Width="auto" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,10,10,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Name="rowindex" Height="60"/>
+                                        <RowDefinition Name="rowname" Height="60"/>
+                                        <RowDefinition Name="rowtask" Height="60"/>
+                                        <RowDefinition Name="rowproject" Height="60"/>
+                                        <RowDefinition Name="rownpu" Height="60"/>
+                                        <RowDefinition Name="rowrazrab" Height="60"/>
+                                        <RowDefinition Name="rowdata" Height="0"/>
+                                        <RowDefinition Name="rowcurrent" Height="0"/>
+                                        <RowDefinition Name="rowdir" Height="0"/>
+                                        <RowDefinition Name="rowbutton" Height="50"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Orientation="Vertical">
+                                        <TextBlock Name="TextBlockIndex" Text="Индекс детали" Foreground="White" Margin="15,5,0,0"/>
+                                        <ComboBox Name="ComboBoxIndex" ToolTip="Добавлять только новые индексы или с литерой(i)" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" Foreground="Black" IsEditable="True"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Name="TextBlockData2" Text="Выполнить до  " Foreground="White" Margin="15,15,0,0"/>
-                                        <DatePicker Name="data2" Width="150" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Foreground="White" BorderBrush="White"/>
+                                    <StackPanel Grid.Row="1" Orientation="Vertical">
+                                        <TextBlock Name="TextBlockName" Text="Название детали" Foreground="White" Margin="15,5,0,0"/>
+                                        <ComboBox Name="ComboBoxName" Width="auto" Foreground="Black" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
                                     </StackPanel>
-                                </StackPanel>
-                                <StackPanel Grid.Row="7" Orientation="Horizontal">
-                                    <CheckBox Name="chTaskIsCurrent" Style="{StaticResource MaterialDesignSwitchToggleButton}" Padding="10,0,0,0" Margin="10,0,0,0"/>
-                                    <TextBlock Name="TextBlockIsCurrent" Text="Актуальное задание" Foreground="White" Margin="10,10,0,0"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="8" Orientation="Vertical">
-                                    <TextBlock Name="TextBlockDir" Text="Файл" Foreground="White" Margin="15,5,0,0"/>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                                        <TextBox Name="TextBoxDirFile" Foreground="Black" Width="250" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0"/>
-                                        <Button Visibility="Visible" ToolTip="Добавить файл" Name="ButtonAddFile" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonAddFile_Click" Margin="0,10,0,0">
+                                    <StackPanel Grid.Row="2" Orientation="Vertical">
+                                        <TextBlock Name="TextBlockTask" Text="Задание" Foreground="White" Margin="15,5,0,0"/>
+                                        <ComboBox Name="ComboBoxZad" Width="auto" Foreground="Black" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="False"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Orientation="Vertical">
+                                        <TextBlock Name="TextBlockProject" Text="Проект" Foreground="White" Margin="15,5,0,0"/>
+                                        <ComboBox Name="ComboBoxProekt" Width="auto" Foreground="Black" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="False"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="4" Orientation="Vertical">
+                                        <TextBlock Name="TextBlockNPU" Text="№ Плана управления" Foreground="White" Margin="15,5,0,0"/>
+                                        <ComboBox Name="ComboBoxNPU" Foreground="Black" ToolTip="Номер последнего плана управления посмотри в раскрывающемся списке" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="5" Orientation="Vertical">
+                                        <TextBlock Name="TextBlockRazrab" Text="Разработал" Foreground="White" Margin="15,5,0,0"/>
+                                        <ComboBox Name="ComboBoxRazrab" Foreground="Black" Width="auto" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0" IsEditable="True"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="6" Orientation="Vertical">
+                                        <StackPanel Orientation="Horizontal" Margin="0,10">
+                                            <TextBlock Name="TextBlockData1" Text="Дата выдачи    " Foreground="White" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                                            <DatePicker Name="data1" Width="140" Style="{StaticResource MaterialDesignDatePicker}" Foreground="#FFC0C0CB" BorderBrush="White" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Name="TextBlockData2" Text="Выполнить до  " Foreground="White" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                                            <DatePicker Name="data2" Width="140" Style="{StaticResource MaterialDesignDatePicker}" Foreground="#FFC0C0CB" BorderBrush="White" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="7" Orientation="Horizontal">
+                                        <CheckBox Name="chTaskIsCurrent" Style="{StaticResource MaterialDesignSwitchToggleButton}" Padding="10,0,0,0" Margin="10,0,0,0"/>
+                                        <TextBlock Name="TextBlockIsCurrent" Text="Актуальное задание" Foreground="White" Margin="10,10,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="8" Orientation="Vertical">
+                                        <TextBlock Name="TextBlockDir" Text="Файл" Foreground="White" Margin="15,5,0,0"/>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                            <TextBox Name="TextBoxDirFile" Foreground="Black" Width="210" HorizontalAlignment="Stretch" Background="#FF7AB9D1" Margin="10,10,10,0"/>
+                                            <Button Visibility="Visible" ToolTip="Добавить файл" Name="ButtonAddFile" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonAddFile_Click" Margin="0,10,0,0">
+                                                <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Grid Grid.Row="9" Margin="0,5,0,0">
+                                        <Button Visibility="Hidden" ToolTip="Добавить деталь" Name="ButtonAddDetailInDB" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonAddDetailInDB_Click">
                                             <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30"/>
                                         </Button>
-                                    </StackPanel>
-                                </StackPanel>
-                                <Grid Grid.Row="9" Margin="0,5,0,0">
-                                    <Button Visibility="Hidden" ToolTip="Добавить деталь" Name="ButtonAddDetailInDB" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonAddDetailInDB_Click">
-                                        <materialDesign:PackIcon Kind="AddCircle" Width="30" Height="30"/>
-                                    </Button>
-                                    <Button Visibility="Hidden" ToolTip="Изменить деталь" Name="ButtonReadDetailInDB" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonReadDetailInDB_Click">
-                                        <materialDesign:PackIcon Kind="ArrowUpDropCircle" Width="30" Height="30"/>
-                                    </Button>
-                                    <Button Visibility="Hidden" ToolTip="Удалить деталь" Name="ButtonRemoveDetailInDB" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonRemoveDetailInDB_Click">
-                                        <materialDesign:PackIcon Kind="MinusCircle" Width="30" Height="30"/>
-                                    </Button>
+                                        <Button Visibility="Hidden" ToolTip="Изменить деталь" Name="ButtonReadDetailInDB" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonReadDetailInDB_Click">
+                                            <materialDesign:PackIcon Kind="ArrowUpDropCircle" Width="30" Height="30"/>
+                                        </Button>
+                                        <Button Visibility="Hidden" ToolTip="Удалить деталь" Name="ButtonRemoveDetailInDB" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonRemoveDetailInDB_Click">
+                                            <materialDesign:PackIcon Kind="MinusCircle" Width="30" Height="30"/>
+                                        </Button>
+                                    </Grid>
                                 </Grid>
-                            </Grid>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                    <TreeView Grid.Row="1" Name="TreeViewDet" HorizontalAlignment="Stretch" Margin="10" VerticalAlignment="Stretch" Width="auto" Background="#FF7AB9D1" Foreground="Black" FontSize="14" Height="auto" SelectedItemChanged="TreeViewDet_SelectedItemChanged"/>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Top" Height="40" HorizontalAlignment="Center">
-                        <Button Name="Button_detail" ToolTip="Детали" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30"  Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_detail_Click">
-                            <materialDesign:PackIcon Kind="Graphql" Width="30" Height="30"/>
-                        </Button>
-                        <Button Name="Button_device" ToolTip="Приспособления" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_device_Click">
-                            <materialDesign:PackIcon Kind="RobotIndustrial" Width="30" Height="30"/>
-                        </Button>
-                        <Button Name="Button_task" ToolTip="Задания" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_task_Click">
-                            <materialDesign:PackIcon Kind="FileAlert" Width="30" Height="30"/>
-                        </Button>
-                        <Button Name="Button_project" ToolTip="Проекты" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_project_Click">
-                            <materialDesign:PackIcon Kind="FileCabinet" Width="30" Height="30"/>
-                        </Button>
-                        <Button Name="Button_graphics" ToolTip="Графики" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_graphics_Click">
-                            <materialDesign:PackIcon Kind="ElevationRise" Width="30" Height="30"/>
-                        </Button>
-                        <Button Name="Button_service" ToolTip="Служебные" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="15,0,0,0" Click="Button_service_Click">
-                            <materialDesign:PackIcon Kind="FileChart" Width="30" Height="30"/>
-                        </Button>
-                    </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="110"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,0,0,10" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                    <Button Name="CurrentTask" HorizontalAlignment="Left" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" ToolTip="Актуальные задания" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="CurrentTask_Click" Margin="0,0,0,0">
+                                        <materialDesign:PackIcon Kind="ClipboardCheckOutline" Width="30" Height="30"/>
+                                    </Button>
+                                    <TextBlock Text="Актуальные задания" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                    <Button Name="TechnologyList" HorizontalAlignment="Left" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" ToolTip="Список технологических процессов" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="0,0,0,0" Click="TechnologyList_Click">
+                                        <materialDesign:PackIcon Kind="ClipboardPulseOutline" Width="30" Height="30"/>
+                                    </Button>
+                                    <TextBlock Text="Список техпроцессов" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                    <Button Name="RegistryTask" HorizontalAlignment="Left" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" ToolTip="Реестр заданий" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="0,0,0,0" Click="RegistryTask_Click" >
+                                        <materialDesign:PackIcon Kind="ClipboardTextOutline" Width="30" Height="30"/>
+                                    </Button>
+                                    <TextBlock Text="Реестр заданий" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" Width="200" HorizontalAlignment="Left" Margin="0,10,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                <Button Name="Button_detail" ToolTip="Детали" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30"  BorderBrush="{x:Null}" Margin="0" Click="Button_detail_Click" Background="{x:Null}">
+                                    <materialDesign:PackIcon Kind="Graphql" Width="30" Height="30"/>
+                                </Button>
+                                <TextBlock Text="Детали" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                <Button Name="Button_device" ToolTip="Приспособления" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" BorderBrush="{x:Null}" Margin="0,5,0,0" Click="Button_device_Click" Background="{x:Null}">
+                                    <materialDesign:PackIcon Kind="RobotIndustrial" Width="30" Height="30"/>
+                                </Button>
+                                <TextBlock Text="Приспособления" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                <Button Name="Button_task" ToolTip="Задания" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" BorderBrush="{x:Null}" Margin="0,5,0,0" Click="Button_task_Click" Background="{x:Null}">
+                                    <materialDesign:PackIcon Kind="FileAlert" Width="30" Height="30"/>
+                                </Button>
+                                <TextBlock Text="Задания" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                <Button Name="Button_project" ToolTip="Проекты" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" BorderBrush="{x:Null}" Margin="0,5,0,0" Click="Button_project_Click" Background="{x:Null}">
+                                    <materialDesign:PackIcon Kind="FileCabinet" Width="30" Height="30"/>
+                                </Button>
+                                <TextBlock Text="Проекты" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                <Button Name="Button_graphics" ToolTip="Графики" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" BorderBrush="{x:Null}" Margin="0,5,0,0" Click="Button_graphics_Click" Background="{x:Null}">
+                                    <materialDesign:PackIcon Kind="ElevationRise" Width="30" Height="30"/>
+                                </Button>
+                                <TextBlock Text="Графики" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                                <Button Name="Button_service" ToolTip="Документы" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" BorderBrush="{x:Null}" Margin="0,5,0,0" Click="Button_service_Click" Background="{x:Null}">
+                                    <materialDesign:PackIcon Kind="FileChart" Width="30" Height="30"/>
+                                </Button>
+                                <TextBlock Text="Документы" Foreground="#DDFFFFFF" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Grid>
             <Grid Name="grid2" Grid.Column="2" Background="#FF157599">
@@ -177,10 +296,10 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <materialDesign:Card Grid.Row="1" Padding="5" Margin="10" Background="White" Width="auto" Height="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <materialDesign:Card Grid.Row="1" Padding="5" Margin="10" Background="#FF7AB9D1" Width="auto" Height="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                         <TextBlock Name="TextBlockPD" Style="{DynamicResource MaterialDesignTitleTextBlock}" TextWrapping="Wrap" Text="Параметры детали" FontSize="14"/>
                     </materialDesign:Card>
-                    <materialDesign:Card Grid.Row="2" Padding="5" Margin="10" Background="White" Width="auto" Height="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <materialDesign:Card Grid.Row="2" Padding="5" Margin="10" Background="#FF7AB9D1" Width="auto" Height="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                         <TextBlock Name="TextBlockPF" Style="{DynamicResource MaterialDesignTitleTextBlock}" TextWrapping="Wrap" Text="Параметры файла" FontSize="14"/>
                     </materialDesign:Card>
                 </Grid>
@@ -246,7 +365,7 @@
                             </Button>
                         </Grid>
                     </StackPanel>
-                    <DataGrid Name="DataGridFiles" Grid.Row="1" RowBackground="White" AlternatingRowBackground="#FF7AB9D1" AutoGenerateColumns="False" HorizontalAlignment="Stretch" Height="auto" Margin="10" VerticalAlignment="Stretch" Width="auto" Background="#FF7AB9D1" Foreground="Black" SelectedCellsChanged="DataGridFiles_SelectedCellsChanged" MouseDoubleClick="DataGridFiles_MouseDoubleClick">
+                    <DataGrid Name="DataGridFiles" Grid.Row="1" RowBackground="White" AlternatingRowBackground="#FF7AB9D1" AutoGenerateColumns="False" HorizontalAlignment="Stretch" Height="auto" Margin="10" VerticalAlignment="Stretch" Width="auto" Background="#FF7AB9D1" Foreground="Black" SelectedCellsChanged="DataGridFiles_SelectedCellsChanged" MouseDoubleClick="DataGridFiles_MouseDoubleClick" FontSize="14">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Имя файла" Binding="{Binding Path=Name}" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Тип файла" Binding="{Binding Path=Type}" IsReadOnly="True"/>
@@ -256,21 +375,21 @@
             </Grid>
         </Grid>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Height="40" HorizontalAlignment="Right">
+            <Button Name="Button_update" ToolTip="Обновить" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_update_Click" >
+                <materialDesign:PackIcon Kind="Autorenew" Width="30" Height="30"/>
+            </Button>
             <Button Name="Button_settings" ToolTip="Настройки" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_settings_Click">
                 <materialDesign:PackIcon Kind="Settings" Width="30" Height="30"/>
             </Button>
             <Button Name="Button_minimized" ToolTip="Свернуть окно" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_minimized_Click">
-                <materialDesign:PackIcon Kind="ArrowCollapseDown" Width="30" Height="30"/>
+                <materialDesign:PackIcon Kind="BorderBottomVariant" Width="30" Height="30"/>
             </Button>
             <Button Name="Button_maxsize" ToolTip="Во весь экран" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="Button_maxsize_Click">
-                <materialDesign:PackIcon Kind="AspectRatio" Width="30" Height="30"/>
+                <materialDesign:PackIcon Kind="BorderAllVariant" Width="30" Height="30"/>
             </Button>
             <Button Name="ButtonExit" ToolTip="Выход" Style="{StaticResource MaterialDesignFloatingActionMiniAccentButton}" Width="30" Height="30" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" Click="ButtonExit_Click">
-                <materialDesign:PackIcon Kind="Power" Width="30" Height="30"/>
+                <materialDesign:PackIcon Kind="Power" Width="30" Height="30" Foreground="#DDFFFFFF"/>
             </Button>
         </StackPanel>
-        <Grid>
-            <TextBlock Name="Loading" Text="" Foreground="White" FontSize="30" Visibility="Visible" VerticalAlignment="Center" HorizontalAlignment="Center" />
-        </Grid>
     </Grid>
 </Window>
